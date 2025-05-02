@@ -86,8 +86,7 @@ if (load_model){
                           model_name = character(),
                           time = numeric()
   )
-  # param_df <- param_df %>% filter(model!="model_age_misc")
-  # conv_time <- conv_time%>%filter(model_name!="model_age_misc")
+ 
   for(model_name in models){
     print(model_name)
     for(i in 1:N){
@@ -132,8 +131,9 @@ if (!load_model){
 ########################################
 #use rate and shape, covariates parametes and their se,to produce the plots.
 source("Functions//plot_estimates.R")
-boxplot_param(param_df,true_param,nsim)
-dotplot_param(param_df,true_param,nsim)
+
+#boxplot_param(param_df,true_param,nsim)
+#dotplot_param(param_df,true_param,nsim)
 
 
 ########################################
@@ -142,11 +142,9 @@ dotplot_param(param_df,true_param,nsim)
 # compute performance measures: bias, empirical standard error, MSE, Coverage, bias-eliminated coverage
 source("Functions//performance_measures.R")
 pm_df <- compute_pm(param_df,true_param) 
-#pm_df <- compute_pm2(param_df,true_param)
-#view(pm_df)
-# plot relative biases
-#plot_rel_bias(pm_df)
-dotplot_rel_bias(param_df, true_param,nsim)
+
+
+#dotplot_rel_bias(param_df, true_param,nsim)
 if (!load_model){
   save(pm_df, file =paste0(result_folder,"/pm_df_",scenario,"_", nsim,".RData"))
 }
@@ -154,7 +152,8 @@ if (!load_model){
 ######## Convergence Analysis ###########
 #########################################
 # estimate average convergence time 
-boxplot(time~ model_name,conv_time)
+
+#boxplot(time~ model_name,conv_time)
 
 
 ##########################################

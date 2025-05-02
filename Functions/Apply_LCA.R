@@ -10,22 +10,6 @@ apply_LCA <- function(pop,scenario_obj, scenario){
   }
   pop$MP <-as.numeric(apply(post,1,which.max))# MODE
   
-  # creare tante versioni dello stesso dataset (30-50) tutto uguale tranne MP 
-  # mp_list <- list()
-  # # array 5x5x50 per salvare table
-  # table_array <- array(data=NA, dim= c(5,5,200))
-  # table_ind <- array(data=NA, dim =c(5,5,200))
-  # pop2 <- pop
-  # for (i in 1:200){
-  #     mp_list[[i]]<- unlist(lapply(1:nrow(post), function(x) which(rmultinom(n=1, size=1, prob=post[x,])==TRUE)))
-  #     pop2$MP <- mp_list[[i]]
-  #     table_array[,,i] <- statetable.msm(MP, patient_id, data=pop2)
-  #     table_ind[,,i] <- table_array[,,i]>0
-  #     
-  # } 
-  # table_array
-  # table_mean <- apply(table_array, 1:2, mean)
-  # table_mean
   
   # renaming MP with right order:
   #scenario_obj$right_order # for renaming MP

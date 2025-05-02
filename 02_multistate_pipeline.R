@@ -62,7 +62,7 @@ run_multistate <- function(pop,result_folder){
     mutate(death = ifelse(Age_exit < Age_death, 0, 1))
   pop_ms_death_1 <- pop_ms %>%
     dplyr::filter(death == 1) %>%
-    group_by(dataset_id, patient_id) %>%
+    group_by(dataset_id, subject_id) %>%
     group_split() %>%
     map_df(~ bind_rows(
       .x,
@@ -76,13 +76,13 @@ run_multistate <- function(pop,result_folder){
   pop_ms <- bind_rows(pop_ms_death_0, pop_ms_death_1)
   
   pop_ms <- pop_ms %>%
-    group_by(dataset_id,patient_id) %>%
+    group_by(dataset_id,subject_id) %>%
     filter(n() > 1) %>%
     ungroup()
   
   if (scenario=="B"){
     pop_ms <- pop_ms %>%
-      group_by(patient_id) %>%
+      group_by(subject_id) %>%
       mutate(flag = cumsum(MP == 2),
              # Adjust MP based on the flag
              MP = case_when(
