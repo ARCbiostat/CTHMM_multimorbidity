@@ -117,7 +117,7 @@ get_estimates <- function(model, model_name, i,j=0){
   beta_cov1_se <- numeric()
   beta_cov2_se <- numeric()
 
-  if(model_name %in% c("flexsurv", "flexsurv_base", "flexsurv_imp"))
+  if(model_name %in% c("benchmark_model"))
   {   
     endings <- names(model$transmodel)
     for (ending in endings) {
@@ -127,10 +127,12 @@ get_estimates <- function(model, model_name, i,j=0){
       rate_se <- c(rate_se, current_model$res.t["rate", "se"])
       shape <- c(shape, current_model$res.t["shape", "est"])
       shape_se <- c(shape_se, current_model$res.t["shape", "se"])
-      beta_cov1 <- c(beta_cov1, current_model$res.t["educ_el", "est"])
-      beta_cov1_se <- c(beta_cov1_se, current_model$res.t["educ_el", "se"])
-      beta_cov2 <- c(beta_cov2, current_model$res.t["dm_sex", "est"])
-      beta_cov2_se <- c(beta_cov2_se, current_model$res.t["dm_sex", "se"])
+      beta_cov1 <- c(beta_cov1, current_model$res.t["cov1", "est"])
+      beta_cov1_se <- c(beta_cov1_se, current_model$res.t["cov1", "se"])
+      beta_cov2 <- c(beta_cov2, current_model$res.t["cov2", "est"])
+      beta_cov2_se <- c(beta_cov2_se, current_model$res.t["cov2", "se"])
+      beta_cov3 <- c(beta_cov3, current_model$res.t["cov3", "est"])
+      beta_cov3_se <- c(beta_cov3_se, current_model$res.t["cov3", "se"])
     }
 
   } else if (model_name %in% c("ApproxTIMM", "ApproxTIHMM")){

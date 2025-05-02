@@ -31,7 +31,7 @@ if (!dir.exists(result_folder)) {
 } else {
   message("Folder 'result_estimate' already exists.")
 }
-models<-c("TIMM","TIHMM","ApproxTIMM", "ApproxTIHMM")
+models<-c("TIMM","TIHMM","ApproxTIMM", "ApproxTIHMM","benchmark_model")
 
 ## load true parameters
 gt <-load(paste0("Simulation/data for simulation/scenario_",scenario,".RData"))

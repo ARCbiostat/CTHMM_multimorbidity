@@ -95,7 +95,7 @@ run_multistate <- function(pop,result_folder){
   }
   
   misc <- calculate_m_matrix(pop,1)
-  
+  apply_flexsurv_base(pop_ms,misc, sim_obj, result_folder)
   apply_msm(pop_ms,misc, sim_obj, result_folder)
   gc()
   apply_nhm(pop_ms,misc, sim_obj,result_folder)
