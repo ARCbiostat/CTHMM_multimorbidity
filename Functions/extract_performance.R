@@ -104,33 +104,6 @@ hazards_mine <- function(x, b.covariates, no.years, trans = NULL,SE=FALSE, CI = 
   return(hazards)
 }
 # 
-# params_msm_age <- matrix(model.msm_age$estimates[4:12], nrow = 3, ncol = 3) #1:3 rate 12:15 age
-# params_msm_age <- cbind(params_msm_age, exp(params_msm_age[,1]), exp(params_msm_age[,2]), exp(params_msm_age[,3]))
-# colnames(params_msm_age) <- colnames(ground_truth_params)[3:8]
-# 
-# min_age <- min(model.msm_age$data[[1]]$age)
-# max_age <- max(model.msm_age$data[[1]]$age)
-# haz <- hazards_mine(model.msm_age, b.covariates = list(age = 0, cov1 = 0, cov2 = 0, cov3 = 0), no.years = 40)
-# 
-# # Assuming this hazards come from fitting a gompertz model I wanna retrieve for each transition
-# # shape and rate value, parameters of the distribution
-# # h(t)=rate*exp(shape*t)
-# # log(h(t))= log(rate) + shape*t
-# # can be seen as y(t)= a+b*t
-# shape <- numeric()
-# rate <- numeric()
-# 
-# for (i in 1:3){
-#   age_grid <- seq(min_age, max_age , length.out = length(unlist(haz[[1]])))
-#   y <- log(as.numeric(unlist(haz[[i]])))
-#   reg_model <- lm(y ~ age_grid)
-#   rate[[i]] <- reg_model$coefficients[1]
-#   shape[[i]]<- reg_model$coefficients[2]
-# }
-# 
-# params_msm_age <- cbind(rate,shape,params_msm_age)
-# bias_msm_age <- compute_bias(params_msm_age, ground_truth_params)
-
 
 get_estimates <- function(model, model_name, i,j=0){
   # 
@@ -139,10 +112,10 @@ get_estimates <- function(model, model_name, i,j=0){
   shape <- numeric()
   shape_se <- numeric()
   trans <-numeric()
-  beta_educ <- numeric()
-  beta_sex <-numeric()
-  beta_educ_se <- numeric()
-  beta_sex_se <- numeric()
+  beta_cov1 <- numeric()
+  beta_cov2 <-numeric()
+  beta_cov1_se <- numeric()
+  beta_cov2_se <- numeric()
 
   if(model_name %in% c("flexsurv", "flexsurv_base", "flexsurv_imp"))
   {   
@@ -154,18 +127,16 @@ get_estimates <- function(model, model_name, i,j=0){
       rate_se <- c(rate_se, current_model$res.t["rate", "se"])
       shape <- c(shape, current_model$res.t["shape", "est"])
       shape_se <- c(shape_se, current_model$res.t["shape", "se"])
-      beta_educ <- c(beta_educ, current_model$res.t["educ_el", "est"])
-      beta_educ_se <- c(beta_educ_se, current_model$res.t["educ_el", "se"])
-      beta_sex <- c(beta_sex, current_model$res.t["dm_sex", "est"])
-      beta_sex_se <- c(beta_sex_se, current_model$res.t["dm_sex", "se"])
+      beta_cov1 <- c(beta_cov1, current_model$res.t["educ_el", "est"])
+      beta_cov1_se <- c(beta_cov1_se, current_model$res.t["educ_el", "se"])
+      beta_cov2 <- c(beta_cov2, current_model$res.t["dm_sex", "est"])
+      beta_cov2_se <- c(beta_cov2_se, current_model$res.t["dm_sex", "se"])
     }
-    if(model_name=="flexsurv_base"){
-      model_name <- "flexsurv_true"
-    }
-  } else if (model_name %in% c("model_age", "model_age_misc")){
+
+  } else if (model_name %in% c("ApproxTIMM", "ApproxTIHMM")){
     # simil gompertz
     
-    haz <- hazards_mine(model$model,SE=TRUE, b.covariates = list(age = 60, educ_el = 0, dm_sex = 0), no.years = 40)
+    haz <- hazards_mine(model$model,SE=TRUE, b.covariates = list(age = 60, cov1 = 0, cov2 = 0, cov3=0), no.years = 40)
     #haz <- hazards_mine(model$model, b.covariates = list(age = 0, educ_el = 0, dm_sex = 0), no.years = 40)
     
     # Assuming this hazards come from fitting a gompertz model I wanna retrieve for each transition
@@ -207,17 +178,15 @@ get_estimates <- function(model, model_name, i,j=0){
       #shape_se <- rep(0,length(trans))
     }
     std_errors <- sqrt(diag(model$model$covmat))
-    beta_educ <- model$model$estimates[((ntrans*2)+1):(3*ntrans)]
-    beta_educ_se <- std_errors[((ntrans*2)+1):(3*ntrans)]
-    beta_sex <- model$model$estimates[((ntrans*3)+1):(4*ntrans)]
-    beta_sex_se <- std_errors[((ntrans*3)+1):(4*ntrans)]
-    if(model_name=="model_age"){
-      model_name <- "msm_base"
-    } else if (model_name=="model_age_misc"){
-      model_name <- "msm_misc"
-    }
+    beta_cov1 <- model$model$estimates[((ntrans*2)+1):(3*ntrans)]
+    beta_cov1_se <- std_errors[((ntrans*2)+1):(3*ntrans)]
+    beta_cov2 <- model$model$estimates[((ntrans*3)+1):(4*ntrans)]
+    beta_cov2_se <- std_errors[((ntrans*3)+1):(4*ntrans)]
+    eta_cov3 <- model$model$estimates[((ntrans*4)+1):(5*ntrans)]
+    beta_cov3_se <- std_errors[((ntrans*4)+1):(5*ntrans)]
+   
 
-  } else if (model_name %in% c("nhm_misc", "nhm_base")){
+  } else if (model_name %in% c("TIMM", "TIHMM")){
     np <- model$model$nstate
     trans <- model$model$parnames[1:np]
     cov_matrix <- solve(model$model$hess)
@@ -227,10 +196,12 @@ get_estimates <- function(model, model_name, i,j=0){
     rate_se <- std_errors[1:np]
     shape <- model$model$par[(np+1):(2*np)]
     shape_se <- std_errors[(np+1):(2*np)]
-    beta_educ <- model$model$par[((np*2)+1):(3*np)]
-    beta_educ_se <- std_errors[((np*2)+1):(3*np)]
-    beta_sex <- model$model$par[((np*3)+1):(4*np)]
-    beta_sex_se <- std_errors[((np*3)+1):(4*np)]
+    beta_cov1 <- model$model$par[((np*2)+1):(3*np)]
+    beta_cov1_se <- std_errors[((np*2)+1):(3*np)]
+    beta_cov2 <- model$model$par[((np*3)+1):(4*np)]
+    beta_cov2_se <- std_errors[((np*3)+1):(4*np)]
+    beta_cov3 <- model$model$par[((np*4)+1):(5*np)]
+    beta_cov3_se <- std_errors[((np*4)+1):(5*np)]
   }
   if (model_name=="flexsurv_imp"){
     est_obj <- data.frame(
@@ -242,10 +213,12 @@ get_estimates <- function(model, model_name, i,j=0){
       rate_se = rate_se,
       shape = shape,
       shape_se = shape_se,
-      beta_educ = beta_educ,
-      beta_educ_se = beta_educ_se,
-      beta_sex = beta_sex,
-      beta_sex_se = beta_sex_se
+      beta_cov1 = beta_cov1,
+      beta_cov1_se = beta_cov1_se,
+      beta_cov2 = beta_cov2,
+      beta_cov2_se = beta_cov2_se,
+      beta_cov3 = beta_cov3,
+      beta_cov3_se = beta_cov3_se
     )
   }else {
     est_obj <- data.frame(
@@ -256,10 +229,12 @@ get_estimates <- function(model, model_name, i,j=0){
     rate_se = rate_se,
     shape = shape,
     shape_se = shape_se,
-    beta_educ = beta_educ,
-    beta_educ_se = beta_educ_se,
-    beta_sex = beta_sex,
-    beta_sex_se = beta_sex_se
+    beta_cov1 = beta_cov1,
+    beta_cov1_se = beta_cov1_se,
+    beta_cov2 = beta_cov2,
+    beta_cov2_se = beta_cov2_se,
+    beta_cov3 = beta_cov3,
+    beta_cov3_se = beta_cov3_se
   )
   }
   
