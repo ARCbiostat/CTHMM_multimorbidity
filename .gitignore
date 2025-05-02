@@ -1,3 +1,7 @@
+results/
+Simulation/Simulation Outputs/
+Data/
+
 # History files
 .Rhistory
 .Rapp.history
