@@ -188,8 +188,7 @@ model_5.2_misc <- msm(MP ~ Age, subject=lopnr, data=snack_nhm_filtered, qmatrix=
                       initprobs = c(0.8,0.2,0),
                       covariates = list("1-2" = ~ Age + educ_el + dm_sex + no_pa + life_alone + heavy_alcool+ if_ever_smoke+ fin_strain_early+finstrain_dummy+sei_long_cat_dummy, "1-3" = ~ Age, "2-3" = ~ Age), 
                       ematrix=misc, 
-                      #fixedpars= c((n1+1):n2),
-                      fixedpars= c(11:12),
+                      fixedpars= c((n1+1):n2),
                       control = list(fnscale = 20000, maxit= 10000))
 hazard.msm(model_5.2_misc) 
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
@@ -1039,12 +1038,11 @@ library(ggprism)
 
 # helper functions in helper_f_snack.R
 HR_est_9cov <- data.frame()
-#HR_est_9cov <- extract_hr_estimates(model_2, "TIMM", "nhm")
 HR_est_9cov <- rbind(HR_est_9cov, 
                      extract_hr_estimates(model_2, "TIMM", "nhm"),
-                     extract_hr_estimates(model_misc2, "TIHMM", "nhm"),
+                     #extract_hr_estimates(model_misc2, "TIHMM", "nhm"),
                      extract_hr_estimates(model_age_cov5, "ApproxTIMM", "msm"),
-                     extract_hr_estimates(model_5.2_misc, "ApproxTIMM", "msm")
+                     extract_hr_estimates(model_5.2_misc, "ApproxTIHMM", "msm")
                      )
 
 HR_est_9cov <- HR_est_9cov %>%
