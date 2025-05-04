@@ -144,6 +144,145 @@ baseline_param <- function(model, model_name){
   )
   return(base_est)
 }
+baseline_param2 <- function(model, model_name){
+  rate<- numeric()
+  rate_se <-numeric()
+  shape <- numeric()
+  shape_se <- numeric()
+  trans <-numeric()
+  haz <- hazards_snack(model,SE=TRUE, b.covariates = list(Age = 60, dm_sex = 0,no_pa=0,life_alone=0), no.years = 40)
+  ntrans <-  sum(model$qmodel$imatrix)
+  trans <- rename_trans(names(haz))
+  min_age <- min(model$data[[1]]$Age)
+  max_age <- max(model$data[[1]]$Age)
+  
+  # SE for rate and shape are computed with bootstrapping
+  n_boot <- 1000
+  for (i in 1:ntrans){
+    
+    age_grid <- seq(min_age, max_age , length.out = length(unlist(haz[[1]]$hazard)))
+    
+    y <- log(as.numeric(unlist(haz[[i]]$hazard)))
+    reg_model <- lm(y ~ age_grid)
+    rate <- c(rate,reg_model$coefficients[1])
+    shape<- c(shape, reg_model$coefficients[2])
+    haz_se <- unlist(haz[[i]]$hazardSE)
+    
+    bootstrap_results <- replicate(n_boot, {
+      y_noisy <- log(as.numeric(unlist(haz[[i]]$hazard))) + rnorm(length(y), 0, haz_se)
+      indices <- sample(1:length(y), replace = TRUE)
+      y_boot <- y_noisy[indices]
+      age_boot <- age_grid[indices]
+      
+      boot_model <- lm(y_boot ~ age_boot)
+      boot_model$coefficients
+    })
+    
+    rate_se <- c(rate_se, sd(bootstrap_results[1, ]))
+    shape_se <- c(shape_se, sd(bootstrap_results[2, ]))
+  }
+  base_est <- data.frame(
+    model = rep(model_name, length(trans)),
+    trans = trans,
+    rate = rate,
+    rate_se = rate_se,
+    shape = shape,
+    shape_se = shape_se
+  )
+  return(base_est)
+}
+
+# HR
+
+extract_hr_estimates <- function(model,model_name, method) {
+  if (method == "nhm") {
+    estimates <- model$par
+    param_names <- model$parnames
+    
+    covariate_indices <- grep("^Covariate:", param_names, value = FALSE)
+    covariate_names <- param_names[covariate_indices]
+    
+    # extract only the covariate name (remove "Covariate: " and transition info)
+    covariate_names_clean <- gsub("^Covariate: | [0-9]+ -> [0-9]+", "", covariate_names)
+    
+    covariate_estimates <- estimates[covariate_indices]
+    
+    hessian_dim <- sqrt(length(model$hess))  
+    hessian_matrix <- matrix(model$hess, nrow = hessian_dim, ncol = hessian_dim)
+    
+    se <- sqrt(diag(solve(hessian_matrix)))[covariate_indices]
+    
+    lower_CI <- covariate_estimates - 1.96 * se
+    upper_CI <- covariate_estimates + 1.96 * se
+    
+    HR <- exp(covariate_estimates)
+    L <- exp(lower_CI)
+    U <- exp(upper_CI)
+    
+    hr_list <- list()
+    
+    for (i in seq_along(covariate_names)) {
+      hr_df <- data.frame(
+        Variable = covariate_names_clean[i],  
+        HR = HR[i],
+        L = L[i],
+        U = U[i]
+      )
+      hr_list[[covariate_names_clean[i]]] <- hr_df
+    }
+    
+    final_hr_df <- do.call(rbind, hr_list)
+  }
+  else if (method == "msm"){
+    hr_estimates <- hazard.msm(model)
+    
+    hr_list <- list()
+    
+    for (var in setdiff(names(hr_estimates), "Age")) {
+      hr_data <- hr_estimates[[var]]["State 1 - State 2", , drop = FALSE]
+      
+      if (!is.null(hr_data)) {
+        hr_df <- data.frame(
+          Variable = var,
+          HR = hr_data[1, "HR"],
+          L = hr_data[1, "L"],
+          U = hr_data[1, "U"]
+        )
+        hr_list[[var]] <- hr_df
+      }
+    }
+    
+    final_hr_df <- do.call(rbind, hr_list)
+    
+  }
+  final_hr_df$model <- rep(model_name, dim(final_hr_df)[1])
+  return(final_hr_df)
+}
+
+plot_HR <- function(data) {
+  data <- data %>%
+    mutate(
+      Variable = factor(Variable, levels = rev(unique(Variable))),  # preserve order
+      jitter_y = as.numeric(Variable) + as.numeric(factor(model)) * 0.15  # stagger by model
+    )
+  
+  ggplot(data, aes(x = HR, color = model)) +
+    geom_point(aes(y = jitter_y), size = 3) +
+    geom_errorbarh(aes(y = jitter_y, xmin = L, xmax = U), height = 0.2) +
+    geom_vline(xintercept = 1, linetype = "dashed", color = "gray") +
+    scale_x_continuous(limits = c(0.5, 2)) +
+    scale_y_continuous(
+      breaks = seq_along(levels(data$Variable)),
+      labels = rev(levels(data$Variable))  # match ordering
+    ) +
+    labs(x = "Hazard Ratio", y = "", title = "Hazard Ratios in Transition from Mild to COmplex MM by Covariate and Model") +
+    theme_prism(border = TRUE) +
+    theme(
+      legend.title = element_blank(),
+      legend.position = "right",
+      axis.text.y = element_text(size = 10)
+    )
+}
 
 # plots: 
 

@@ -132,9 +132,9 @@ summary(snack_3$n_visits)
 hetcor(cov_tot[2:11])
 
 
-#########################
-### FITTING THE MODEL ###
-########################
+####################################
+######## FITTING THE MODELS ########
+
 
 statetable.msm(MP, subject=lopnr, data= snack_2_filtered)
 q_matrix <- rbind(c(0,1,1),
@@ -166,7 +166,7 @@ hazard.msm(model_age_cov5)
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
 save(model_age_cov5, file =paste0(result_folder,"/ApproxTIMM_9cov_",timestamp,".RData"))
 
-#### ApproxTIHMM ####
+#### ApproxTIHMM: 9 covariates ####
 qmatrix_init <- model_age_cov5$Qmatrices$baseline 
 covinits_init <-model_age_cov5$estimates
 n1<- sum(q0 > 0)
@@ -197,8 +197,7 @@ save(model_5.2_misc, file =paste0(result_folder,"/ApproxTIHMM_9cov_",timestamp,"
 
 
 ##################################
-### 6 covariates #################
-##################################
+###  ApproxTIMM and ApproxTIHMM: 6 covariates #################
 # removing covariates with too many NAs
 q_matrix <- rbind(c(0,1,1),
                   c(0,0,1),
@@ -232,12 +231,17 @@ timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
 save(model_6_misc, file =paste0(result_folder,"/ApproxTIHMM_6cov_",timestamp,".RData"))
 
 
-###############################
-###########TIHMM################
-###############################
+#####################################################
+###########TIMM and TIHMM: 9 covariates################
 
+q_nhm <- rbind(c(0,1,2),
+               c(0,0,3),
+               c(0,0,0))
+colnames(q_nhm)<-c(1:dim(q_nhm)[1])
+rownames(q_nhm)<-c(1:dim(q_nhm)[1])
+# same structure for q_mat and nonh
+nonh <- q_nhm
 
-############## full nhm model ############
 covm1 <- list(
   educ_el = rbind(c(0,1,0), c(0,0,0), c(0,0,0)),
   dm_sex = rbind(c(0,2,0), c(0,0,0), c(0,0,0)),
@@ -250,7 +254,7 @@ covm1 <- list(
   sei_long_cat_dummy = rbind(c(0,9,0), c(0,0,0), c(0,0,0))
 )
 
-tic("nhm gompertz with cov")
+tic("nhm gompertz with 9 cov")
 model_obj_gomp2<- model.nhm(state ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
                             nonh= nonh,
                             covariates= c("educ_el", "dm_sex","no_pa" , "life_alone",  "heavy_alcool","if_ever_smoke", "fin_strain_early","finstrain_dummy","sei_long_cat_dummy"),
@@ -261,13 +265,13 @@ model_2 <- nhm(model_obj_gomp2,
                #initial= nhm_init,
                gen_inits = TRUE, #not converging
                control=nhm.control(splits = c(60,61,63,65,75,76,85,95,99,102,103,105,109),
-                                   ncores = 4
+                                   ncores = detectCores()-2
                                    #, verbose=TRUE
                )
 )
-toc() # nhm gompertz with cov: 12586.949 sec elapsed
+toc() # nhm gompertz with 9 cov: 12586.949 sec elapsed
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-save(model_2, file =paste0("results/TIMM_",timestamp,".RData"))
+save(model_2, file =paste0(result_folder,"/TIMM_9cov_",timestamp,".RData"))
 
 misc_shape <- rbind(c(0,2,0),
                     c(1,0,0),
@@ -296,7 +300,7 @@ model_misc <- nhm(
   fixedpar = c(n1:n2),
   control = nhm.control(
     splits = split_points,
-    ncores = 4, 
+    ncores = detectCores()-2, 
     rtol = 1e-6, 
     atol = 1e-6
   )
@@ -311,7 +315,7 @@ model_misc2 <- nhm(
   fixedpar = c(n1:n2),
   control = nhm.control(
     splits = split_points,
-    ncores = 4, 
+    ncores = detectCores()-2, 
     rtol = 1e-6, 
     atol = 1e-6
   )
@@ -319,59 +323,89 @@ model_misc2 <- nhm(
 toc()
 
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-save(model_misc2, file =paste0("results/TIHMM_",timestamp,".RData"))
+save(model_misc2, file =paste0(result_folder,"/THIMM_9cov_",timestamp,".RData"))
 
 
-### baseline hazard plots ###
+####################################################
+########## TIMM and TIHMM: 6 covariates ############
+covm1 <- list(
+  educ_el = rbind(c(0,1,0), c(0,0,0), c(0,0,0)),
+  dm_sex = rbind(c(0,2,0), c(0,0,0), c(0,0,0)),
+  no_pa = rbind(c(0,3,0), c(0,0,0), c(0,0,0)),
+  life_alone = rbind(c(0,4,0), c(0,0,0), c(0,0,0)),
+  if_ever_smoke = rbind(c(0,5,0), c(0,0,0), c(0,0,0)),
+  heavy_alcool = rbind(c(0,6,0), c(0,0,0), c(0,0,0))
+)
+
+tic("nhm gompertz with cov")
+model_obj_gomp1<- model.nhm(state ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
+                            nonh= nonh,
+                            covariates= c("educ_el", "dm_sex","no_pa" , "life_alone", "if_ever_smoke", "heavy_alcool"),
+                            covm = covm1,
+                            death=T, death.states = 3)
+
+model_1 <- nhm(model_obj_gomp1,
+               #initial= nhm_init,
+               gen_inits = TRUE, #not converging
+               control=nhm.control(splits = c(60,61,63,65,75,76,85,95,99,102,103,105,109),
+                                   ncores = 4
+                                   #, verbose=TRUE
+               )
+)
+toc()
+
+nhm_init <- c(model_1$par)
+model_1.1 <- nhm(model_obj_gomp1,
+                 initial= nhm_init,
+                 #gen_inits = TRUE, #not converging
+                 control=nhm.control(splits = c(60,61,63,65,75,76,85,95,99,102,103,105,109),
+                                     ncores = 4
+                                     #, verbose=TRUE
+                 )
+)
+#
+
+# misc model
+non_diagonal <- misc
+diag(non_diagonal) <- 0
+misc_param <- non_diagonal[non_diagonal != 0]
+nhm_init <- c(model_1.1$par, log(misc_param))
+
+misc_shape <- rbind(c(0,2,0),
+                    c(1,0,0),
+                    c(0,0,0))
+covm2
+tic("nhm misc gompertz with cov")
+model_obj_gomp_misc<- model.nhm(tate ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
+                                nonh= nonh,
+                                emat = misc_shape,
+                                covariates= c("educ_el", "dm_sex","no_pa" , "life_alone", "if_ever_smoke", "heavy_alcool"),
+                                covm = covm1,
+                                death=T, death.states = 3)
+
+
+# misc parameters need to be passed to initial and then fixed in fixedpar
+n1<- length(model_0$par) + 1
+n2<- length(nhm_init)
+split_points <- c(60,61,63,65,75,76,85,95,99,102,103,105,106,109)
+
+model_misc <- nhm(
+  model_obj_gomp_misc,
+  initial = nhm_init,
+  fixedpar = c(n1:n2),
+  control = nhm.control(
+    splits = split_points,
+    ncores = 4, 
+    rtol = 1e-8, 
+    atol = 1e-8
+  )
+)
+
+
+########################################
+############ baseline hazard plots ##########
 # obtain approx Gompertz param:
 
-baseline_param2 <- function(model, model_name){
-  rate<- numeric()
-  rate_se <-numeric()
-  shape <- numeric()
-  shape_se <- numeric()
-  trans <-numeric()
-  haz <- hazards_snack(model,SE=TRUE, b.covariates = list(Age = 60, dm_sex = 0,no_pa=0,life_alone=0), no.years = 40)
-  ntrans <-  sum(model$qmodel$imatrix)
-  trans <- rename_trans(names(haz))
-  min_age <- min(model$data[[1]]$Age)
-  max_age <- max(model$data[[1]]$Age)
-  
-  # SE for rate and shape are computed with bootstrapping
-  n_boot <- 1000
-  for (i in 1:ntrans){
-    
-    age_grid <- seq(min_age, max_age , length.out = length(unlist(haz[[1]]$hazard)))
-    
-    y <- log(as.numeric(unlist(haz[[i]]$hazard)))
-    reg_model <- lm(y ~ age_grid)
-    rate <- c(rate,reg_model$coefficients[1])
-    shape<- c(shape, reg_model$coefficients[2])
-    haz_se <- unlist(haz[[i]]$hazardSE)
-    
-    bootstrap_results <- replicate(n_boot, {
-      y_noisy <- log(as.numeric(unlist(haz[[i]]$hazard))) + rnorm(length(y), 0, haz_se)
-      indices <- sample(1:length(y), replace = TRUE)
-      y_boot <- y_noisy[indices]
-      age_boot <- age_grid[indices]
-      
-      boot_model <- lm(y_boot ~ age_boot)
-      boot_model$coefficients
-    })
-    
-    rate_se <- c(rate_se, sd(bootstrap_results[1, ]))
-    shape_se <- c(shape_se, sd(bootstrap_results[2, ]))
-  }
-  base_est <- data.frame(
-    model = rep(model_name, length(trans)),
-    trans = trans,
-    rate = rate,
-    rate_se = rate_se,
-    shape = shape,
-    shape_se = shape_se
-  )
-  return(base_est)
-}
 
 bp_reduced <- data.frame(model= character(),
                          trans=character(),
@@ -557,6 +591,8 @@ plot_cum_hazard_snack(base_param,t_vals)
 plot_hazard_snack(base_param,t_vals)
 #plot_hazard_snack_ci(base_param,t_vals)
 
+
+
 ########################
 ### Goodness of fit ####
 ########################
@@ -612,6 +648,7 @@ n <- dim(snack_nhm)[1]
 +2*model_misc3$value + log(n)*model_misc3$npar
 
 
+######### Plots ###########
 #### TIMM plots ###
 plot(model_2, time0=60)
 plot(model_2, time0=60, times= t_vals)
@@ -996,44 +1033,43 @@ plot_hazard_snack_np<-function(pm_df,  t_vals, np_est, nsim=NULL, ST=NULL) {
 }
 plot_hazard_snack_np(base_param,t_vals, haz_est)
 
-###### forest plot ########
-library(forestplot)
+###### HR plots ########
+library(ggplot2)
+library(ggprism)
 
-model_5.2_misc 
-hr_estimates <- hazard.msm(model_5.2_misc)
+# helper functions in helper_f_snack.R
+HR_est_9cov <- data.frame()
+#HR_est_9cov <- extract_hr_estimates(model_2, "TIMM", "nhm")
+HR_est_9cov <- rbind(HR_est_9cov, 
+                     extract_hr_estimates(model_2, "TIMM", "nhm"),
+                     extract_hr_estimates(model_misc2, "TIHMM", "nhm"),
+                     extract_hr_estimates(model_age_cov5, "ApproxTIMM", "msm"),
+                     extract_hr_estimates(model_5.2_misc, "ApproxTIMM", "msm")
+                     )
 
-hr_list <- list()
+HR_est_9cov <- HR_est_9cov %>%
+  mutate(Variable = recode(Variable,
+                           "if_ever_smoke"        = "smoke (Y/N)",
+                           "dm_sex"               = "sex (F/M)",
+                           "no_pa"                = "physical activity (N/Y)",
+                           "life_alone"           = "living alone (Y/N)",
+                           "fin_strain_early"     = "financial strain early (Y/N)",
+                           "finstrain_dummy"      = "financial strain (Y/N)",
+                           "educ_el"              = "education (L/H)",
+                           "heavy_alcool"         = "alcohol (Y/N)",
+                           "sei_long_cat_dummy"   = "manual occupation (Y/N)" 
+  ))
+HR_est_6cov <- HR_est_6cov %>%
+  mutate(Variable = recode(Variable,
+                           "if_ever_smoke"        = "smoke (Y/N)",
+                           "dm_sex"               = "sex (F/M)",
+                           "no_pa"                = "physical activity (N/Y)",
+                           "life_alone"           = "living alone (Y/N)",
+                           "educ_el"              = "education (L/H)",
+                           "heavy_alcool"         = "alcohol (Y/N)"
+  ))
 
-for (var in setdiff(names(hr_estimates), "Age")) {
-  hr_data <- hr_estimates[[var]]["State 1 - State 2", , drop = FALSE]
-  
-  if (!is.null(hr_data)) {
-    hr_df <- data.frame(
-      Variable = var,
-      HR = hr_data[1, "HR"],
-      L = hr_data[1, "L"],
-      U = hr_data[1, "U"]
-    )
-    hr_list[[var]] <- hr_df
-  }
-}
-
-final_hr_df <- do.call(rbind, hr_list)
-
-# View the resulting data frame
-print(final_hr_df)
-
-
-forestplot(
-  labeltext = rownames(final_hr_df), 
-  mean = final_hr_df$HR, 
-  lower = final_hr_df$L, 
-  upper = final_hr_df$U,
-  xlab = "Hazard Ratio",
-  col = fpColors(box = "#6A89A7", line = "gray", summary = "black"),
-  zero = 1,
-  col.zero = "gray",
-  is.summary = FALSE
-)
+plot_HR(HR_est_9cov)
+plot_HR(HR_est_6cov)
 
 
