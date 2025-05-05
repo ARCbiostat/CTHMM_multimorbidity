@@ -300,8 +300,8 @@ model_misc <- nhm(
   control = nhm.control(
     splits = split_points,
     ncores = detectCores()-2, 
-    rtol = 1e-6, 
-    atol = 1e-6
+    rtol = 1e-8, 
+    atol = 1e-8
   )
 )
 toc() # 39420.092
@@ -322,7 +322,7 @@ model_misc2 <- nhm(
 toc()
 
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-save(model_misc2, file =paste0(result_folder,"/THIMM_9cov_",timestamp,".RData"))
+save(model_misc2, file =paste0(result_folder,"/TIHMM_9cov_",timestamp,".RData"))
 
 
 ####################################################
@@ -336,7 +336,7 @@ covm1 <- list(
   heavy_alcool = rbind(c(0,6,0), c(0,0,0), c(0,0,0))
 )
 
-tic("nhm gompertz with cov")
+tic("nhm gompertz with 6 cov")
 model_obj_gomp1<- model.nhm(state ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
                             nonh= nonh,
                             covariates= c("educ_el", "dm_sex","no_pa" , "life_alone", "if_ever_smoke", "heavy_alcool"),
@@ -363,6 +363,9 @@ model_1.1 <- nhm(model_obj_gomp1,
                  )
 )
 #
+timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+save(model_1.1, file =paste0(result_folder,"/TIMM_6cov_",timestamp,".RData"))
+
 
 # misc model
 non_diagonal <- misc
@@ -370,12 +373,10 @@ diag(non_diagonal) <- 0
 misc_param <- non_diagonal[non_diagonal != 0]
 nhm_init <- c(model_1.1$par, log(misc_param))
 
-misc_shape <- rbind(c(0,2,0),
-                    c(1,0,0),
-                    c(0,0,0))
-covm2
-tic("nhm misc gompertz with cov")
-model_obj_gomp_misc<- model.nhm(tate ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
+
+
+tic("nhm misc gompertz with 6 cov")
+model_obj_gomp_misc<- model.nhm(state ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
                                 nonh= nonh,
                                 emat = misc_shape,
                                 covariates= c("educ_el", "dm_sex","no_pa" , "life_alone", "if_ever_smoke", "heavy_alcool"),
@@ -384,7 +385,7 @@ model_obj_gomp_misc<- model.nhm(tate ~ Age, subject=lopnr, type='gompertz', data
 
 
 # misc parameters need to be passed to initial and then fixed in fixedpar
-n1<- length(model_0$par) + 1
+n1<- length(model_1.1$par) + 1
 n2<- length(nhm_init)
 split_points <- c(60,61,63,65,75,76,85,95,99,102,103,105,106,109)
 
@@ -400,6 +401,8 @@ model_misc <- nhm(
   )
 )
 
+timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+save(model_misc, file =paste0(result_folder,"/TIHMM_6cov_",timestamp,".RData"))
 
 ########################################
 ############ baseline hazard plots ##########
@@ -628,8 +631,8 @@ AIC(model_age_cov6)
 AIC(model_6_misc)
 AIC(model_3)
 +2*model_3$value + 2*model_3$npar
-AIC(model_misc3) # -2 logLik + 2*n_param
-AIC_TIHMM <- 2*model_misc3$value + 2*(model_misc3$npar)
+AIC(model_misc) # -2 logLik + 2*n_param
+AIC_TIHMM <- 2*model_misc$value + 2*(model_misc$npar)
 AIC_TIHMM
 
 
@@ -637,212 +640,45 @@ AIC_TIHMM
 logLik(model_age_cov6) 
 logLik(model_6_misc) 
 -model_3$value
--model_misc3$value
+-model_misc$value
 
 # BIC :  -2 logLik + log(n)*n_param. n = number of observations
 n <- dim(snack_nhm)[1]
 -2*logLik(model_age_cov6) + log(n)*length(model_age_cov6$estimates[model_age_cov6$estimates!=0])
 -2*logLik(model_6_misc) + log(n)*length(model_6_misc$estimates[model_6_misc$estimates!=0])
 +2*model_3$value + log(n)*model_3$npar
-+2*model_misc3$value + log(n)*model_misc3$npar
++2*model_misc$value + log(n)*model_misc$npar
 
 
 ######### Plots ###########
 #### TIMM plots ###
+t_vals <- seq(60, 90, length.out = 100)
+
 plot(model_2, time0=60)
 plot(model_2, time0=60, times= t_vals)
 plot(model_2,what="intensities" , time0=60)
 
-# female vs male
+# female (blu) vs male (red)
+plot.nhm.mine2(model_misc, what= "intensity",trans = 1, covvalue = c(0,1,0,0,0,0), colours = c("blue","red"), colours_fill = c("lightblue","pink"),
+               labels = c("Female","Male"), time0=60, times= t_vals, main_arg= "Hazard function", xlab="Age")
+# no physical activity (orange) vs physical activity (green)
+plot.nhm.mine2(model_misc, what= "intensity",trans = 1, covvalue = c(0,0,1,0,0,0), colours = c("darkorange","forestgreen"), colours_fill = c("moccasin","#ccffcc"),
+               labels = c("No physical activity","Physical activity"), time0=60, times= t_vals, main_arg= "Hazard function", xlab="Age")
+
 plot(model_2, time0=60, covvalue = c(0,1,0,0,0,0,1,0,0))
 plot(model_2, time0=60, covvalue = c(0,0,0,0,0,0,1,0,0))
 #predict(model_2, time0=60, times= t_vals)
 
 #### TIHMM plots ###
 plot.nhm.mine(model_misc2, time0=60, xlab="Age")
-plot.nhm.mine(model_misc3, time0=60)
+plot.nhm.mine(model_misc, time0=60, xlab="Age")
 plot.nhm.mine(model_misc2, what= "intensities",time0=60, times= t_vals, main_arg= "Hazard function", xlab="Age")
-plot.nhm.mine(model_misc3, what= "intensities",time0=60, times= t_vals, main_arg= "Hazard function")
-plot.nhm.mine(model_2, time0=60, covvalue = c(0,1,0,0,0,0,1,0,0))
-plot.nhm.mine(model_2, time0=60, covvalue = c(0,0,0,0,0,0,1,0,0))
+plot.nhm.mine(model_misc, what= "intensities",time0=60, times= t_vals, main_arg= "Hazard function", xlab="Age")
+plot.nhm.mine(model_misc, what= "probabilities",time0=60, times= t_vals, main_arg= "Hazard function", xlab="Age")
+plot.nhm.mine(model_2, time0=60, covvalue = c(0,1,0,0,0,0,1,0,0), xlab="Age")
+plot.nhm.mine(model_2, time0=60, covvalue = c(0,0,0,0,0,0,1,0,0), xlab="Age")
 
 
-# non-param estimates for hazard 1->3
-data <- msm2Surv(data = snack_nhm, subject = "lopnr", time= "Age", state="MP", Q = q_matrix)
-data_2 <- data %>% filter(trans==2)
-model_flex <- flexsurvreg(formula = Surv(Tstart,Tstop, status) ~ educ_el + dm_sex+no_pa + life_alone + heavy_alcool + if_ever_smoke +fin_strain_early +finstrain_dummy+ sei_long_cat_dummy, subset=(trans==2),
-                       data = data_2, dist = "gompertz")
-plot(model_flex,type= "cumhaz", est= TRUE, ci=FALSE, t=t_vals, xlim= c(60,90))
-plot_cumhazard_with_ci <- function(x, mp, col.obs = "black", xlim, lty.obs = 1, lwd.obs = 1, ylim = NULL, t = NULL, start = 0, est = TRUE, ci = NULL, B = 1000, cl = 0.95, col = "red", 
-                                   lty = 1, lwd = 2, col.ci = "black", lty.ci = 2, lwd.ci = 0.5, 
-                                   add = FALSE) {
-  dat <- x$data
-  mf <- model.frame(x)
-  mm <- as.data.frame(model.matrix(x))
-  if (isTRUE(attr(dat$Y, "type") == "interval")) {
-    form <- "Surv(dat$Y[,\"time1\"],dat$Y[,\"time2\"],type=\"interval2\") ~ "
-  } else {
-    form <- "Surv(dat$Y[,\"start\"],dat$Y[,\"stop\"],dat$Y[,\"status\"]) ~ "
-  }
-  form <- paste(form, if (x$ncovs > 0 && all(x$covdata$isfac)) 
-    paste("mm[,", 1:x$ncoveffs, "]", collapse = " + ")
-    else 1)
-  form <- as.formula(form)
-  
-  #plot(survfit(form, data = mm, weights = dat$m$`(weights)`), fun = "cumhaz", col = col.obs, lty = lty.obs, lwd = lwd.obs, ylim = ylim, xlim=xlim)
-  surv_fit <- survfit(form, data = mm, weights = dat$m$`(weights)`)
-  cumhaz_data <- data.frame(time = surv_fit$time, cumhaz = -log(surv_fit$surv),
-                            lcl = -log(surv_fit$upper),
-                            ucl = -log(surv_fit$lower))
-  model_ids <- unique(mp$model)
-  model_hazards <- list()
-  
-  for (j in seq_along(model_ids)) {
-    model_data <- mp %>% filter(model == model_ids[j])
-    shape_param <- model_data$shape
-    rate_param <- model_data$rate
-    
-    if (length(shape_param) == 1 && length(rate_param) == 1) {
-      model_hazards[[j]] <- tibble(
-        t = t_vals,
-        hazard = Hgompertz(t_vals, shape_param, exp(rate_param), log = FALSE),
-        model = paste0("Model ", model_ids[j])
-      )
-    }
-  }
-  
-  p <- ggplot(cumhaz_data, aes(x = time, y = cumhaz)) +
-    geom_line(color = col.obs, linetype = lty.obs, size = lwd.obs) +
-    geom_line(aes(y = lcl), color = col.ci, linetype = lty.ci, size = lwd.ci) +
-    geom_line(aes(y = ucl), color = col.ci, linetype = lty.ci, size = lwd.ci) +
-    labs(x = "Age", y = "Cumulative Hazard") +
-    theme_minimal() +
-    theme(panel.grid.major = element_blank(),
-                  panel.grid.minor = element_blank(),
-                  panel.border = element_rect(color = "lightgray", fill = NA, linewidth = 0.5),
-                  plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
-                  legend.position = "bottom" )
-  
-  if (!is.null(xlim)) {
-    p <- p + xlim(xlim)
-  }
-  
-  print(p)
-}
-plot_cumhazard_with_ci <- function(x, mp, col.obs = "black", xlim = NULL, lty.obs = 1, lwd.obs = 1, ylim = NULL, t = NULL, start = 0, est = TRUE, ci = NULL, B = 1000, cl = 0.95, col = "red", 
-                                   lty = 1, lwd = 2, col.ci = "black", lty.ci = 2, lwd.ci = 0.5, 
-                                   add = FALSE) {
-  dat <- x$data
-  mf <- model.frame(x)
-  mm <- as.data.frame(model.matrix(x))
-  
-  form <- as.formula(paste0("Surv(dat$Y[,\"start\"], dat$Y[,\"stop\"], dat$Y[,\"status\"]) ~ ",
-                            if (x$ncovs > 0 && all(x$covdata$isfac)) paste("mm[,", 1:x$ncoveffs, "]", collapse = " + ") else 1))
-  
-  surv_fit <- survfit(form, data = mm, weights = dat$m$`(weights)`)
-  cumhaz_data <- data.frame(time = surv_fit$time, cumhaz = -log(surv_fit$surv),
-                            lcl = -log(surv_fit$upper),
-                            ucl = -log(surv_fit$lower))
-  if (!is.null(xlim)) {
-    cumhaz_data <- cumhaz_data %>% filter(time >= xlim[1])
-  }
-  
-  # Build cumulative hazard curves for mp models
-  model_ids <- unique(mp$model)
-  model_hazards <- list()
-  t_vals <- seq(min(cumhaz_data$time), max(cumhaz_data$time), length.out = 500)
-  
-  for (j in seq_along(model_ids)) {
-    model_data <- mp %>% filter(model == model_ids[j])
-    shape_param <- model_data$shape
-    rate_param <- model_data$rate
-    
-    if (length(shape_param) == 1 && length(rate_param) == 1) {
-      model_hazards[[j]] <- tibble(
-        time = t_vals,
-        cumhaz = Hgompertz(t_vals, shape_param, exp(rate_param), log = FALSE),
-        model = paste0("Model ", model_ids[j])
-      )
-    }
-  }
-  
-  model_hazards_df <- bind_rows(model_hazards)
-  
-  p <- ggplot(cumhaz_data, aes(x = time, y = cumhaz)) +
-    geom_line(aes(color = "Nonparametric"), linetype = lty.obs, linewidth = lwd.obs) +
-    geom_line(aes(y = lcl, color = "LCL"), linetype = lty.ci, linewidth = lwd.ci) +
-    geom_line(aes(y = ucl, color = "UCL"), linetype = lty.ci, linewidth = lwd.ci) +
-    geom_line(data = model_hazards_df, aes(x = time, y = cumhaz, color = model), linetype = "dashed", linewidth = lwd) +
-    scale_color_manual(
-      values = c("Nonparametric" = col.obs, 
-                 "LCL" = col.ci, 
-                 "UCL" = col.ci, 
-                 setNames(rainbow(length(model_ids)), paste0("Model ", model_ids)))
-    ) +
-    labs(x = "Time", y = "Cumulative Hazard", color = "Models", title = "Cumulative Hazard transition 1->3") +
-    theme_minimal() +
-    theme(panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          panel.border = element_rect(color = "lightgray", fill = NA, linewidth = 0.5),
-          plot.title = element_text(size = 12, face = "bold", hjust = 0.5),
-          legend.position = "bottom")
-  
-  if (!is.null(xlim)) {
-    p <- p + xlim(xlim)
-  }
-  
-  if (!is.null(ylim)) {
-    p <- p + ylim(ylim)
-  }
-  
-  print(p)
-}
-
-base_param_2 <- base_param %>% filter(trans=="1->3")
-plot_cumhazard_with_ci(model_flex, base_param_2, t=t_vals, xlim= c(60,90))
-
-
-library(muhaz)
-
-data_3 <-  snack_nhm %>%
-  arrange(lopnr, Age) %>%
-  group_by(lopnr) %>%
-  mutate(
-    next_state = lead(state),
-    event_1_to_3 = ifelse(state == 1 & next_state == 3, 1, 0),
-    remove = ifelse(state==2 | (state==2 & next_state == 3),1,0)
-  ) %>%
-  ungroup()
-
-data_3 <- data_3 %>%
-  group_by(lopnr) %>%
-  filter(!any(remove == 1)) %>%
-  ungroup()
-
-survival_data <- data_3 %>%
-  group_by(lopnr) %>%
-  summarize(
-    start_time = min(Age),
-    event_time_idx = which(event_1_to_3 == 1)[1],  # Index of the event if exists
-    stop_time = if (!is.na(event_time_idx)) Age[event_time_idx + 1] else max(Age),
-    event = ifelse(!is.na(event_time_idx), 1, 0)
-  ) %>%
-  ungroup() %>%
-  dplyr::select(-event_time_idx)
-
-
-# Estimate non-parametric hazard using muhaz
-haz_est <- muhaz(
-  times = survival_data$stop_time,
-  delta = survival_data$event,
-  min.time = min(survival_data$start_time, na.rm = TRUE),
-  #max.time = max(survival_data$stop_time, na.rm=TRUE)
-  #min.time=60,
-  max.time=90
-)
-
-# Plot the estimated hazard function
-plot(haz_est, main = "Non parametric hazard function: 1->3", xlab = "Age", ylab = "Hazard")
 
 ########
 plot_hazard_snack_np<-function(pm_df,  t_vals, np_est, nsim=NULL, ST=NULL) {
@@ -1040,7 +876,7 @@ library(ggprism)
 HR_est_9cov <- data.frame()
 HR_est_9cov <- rbind(HR_est_9cov, 
                      extract_hr_estimates(model_2, "TIMM", "nhm"),
-                     #extract_hr_estimates(model_misc2, "TIHMM", "nhm"),
+                     extract_hr_estimates(model_misc2, "TIHMM", "nhm"),
                      extract_hr_estimates(model_age_cov5, "ApproxTIMM", "msm"),
                      extract_hr_estimates(model_5.2_misc, "ApproxTIHMM", "msm")
                      )
@@ -1057,6 +893,13 @@ HR_est_9cov <- HR_est_9cov %>%
                            "heavy_alcool"         = "alcohol (Y/N)",
                            "sei_long_cat_dummy"   = "manual occupation (Y/N)" 
   ))
+HR_est_6cov <- data.frame()
+HR_est_6cov <- rbind(HR_est_6cov, 
+                     extract_hr_estimates(model_1, "TIMM", "nhm"),
+                     extract_hr_estimates(model_misc, "TIHMM", "nhm"),
+                     extract_hr_estimates(model_age_cov6, "ApproxTIMM", "msm"),
+                     extract_hr_estimates(model_6_misc, "ApproxTIHMM", "msm")
+)
 HR_est_6cov <- HR_est_6cov %>%
   mutate(Variable = recode(Variable,
                            "if_ever_smoke"        = "smoke (Y/N)",
