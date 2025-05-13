@@ -20,7 +20,7 @@ apply_nhm <- function(pop_ms,misc, sim_obj, result_folder){
     covm <- list(
       cov1 = rbind(c(0,1,2), c(0,0,3), c(0,0,0)),
       cov2 = rbind(c(0,4,5), c(0,0,6), c(0,0,0)),
-      cov3 = rbind(c(0,4,5), c(0,0,6), c(0,0,0)),
+      cov3 = rbind(c(0,7,8), c(0,0,9), c(0,0,0)),
       )
     tic("nhm gompertz with cov")
     model_obj_gomp<- model.nhm(state ~ age, subject=subject_id, type='gompertz', data=pop_ms, trans= q_nhm,
