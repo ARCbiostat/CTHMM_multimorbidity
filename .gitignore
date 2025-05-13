@@ -1,6 +1,7 @@
 results/
 Simulation/Simulation Outputs/
 Data Simulation/
+Data SNAC-K/
 # History files
 .Rhistory
 .Rapp.history
