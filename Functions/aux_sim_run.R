@@ -4,7 +4,7 @@ create_unique_folder <- function(prefix = "results",study_type) {
   folder_name <- paste0(prefix, "_", timestamp,"_",study_type)
   return(folder_name)
 }
-run_multistate <- function(pop,result_folder,LCA_obj,nsim){
+run_multistate <- function(pop_ms,result_folder,LCA_obj,nsim){
   
   pop_ms_death_1 <- pop_ms %>%
     dplyr::filter(dht == 1) %>%
@@ -58,8 +58,8 @@ run_analysis <- function(study_type,nsim,LCA_obj){
   
   ########### split by dataset_id #########
   # run in parallel, group pop by dataset_id
-  cores <- min(detectCores() -5, 20) #modify number of cores
-  plan(multisession, workers=cores)  # Or `plan(multiprocess)` for cross-platform compatibility
+  #cores <- min(detectCores() -5, 20) #modify number of cores
+  #plan(multisession, workers=cores)  # Or `plan(multiprocess)` for cross-platform compatibility
   
   datasets <- split(data_mm, data_mm$dataset_id)
   
@@ -69,7 +69,7 @@ run_analysis <- function(study_type,nsim,LCA_obj){
   
   # call function to apply nhm, msm, and flexsurv in parallel
   tic("Multistate in parallel")
-  options(future.globals.maxSize=1*1e9)
+  #options(future.globals.maxSize=1*1e9)
   lapply(datasets, function(x)run_multistate_wrapper(x,result_folder,LCA_obj,nsim))
   #future_lapply(datasets, FUN = function(x)run_multistate_wrapper(x,result_folder,LCA_obj,nsim))
   toc()

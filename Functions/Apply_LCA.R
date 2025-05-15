@@ -3,7 +3,7 @@
 apply_LCA <- function(pop, scenario_obj) {
   pop %<>% ungroup() 
   X <- pop %>%  dplyr::select(any_of(colnames(scenario_obj$pattern_obj$obj$y))) %>% dplyr::mutate_all(function(x)
-    x + 1)
+    x + 1) %>% as.data.frame()
   
   post <- poLCA::poLCA.posterior(scenario_obj$pattern_obj$obj,
                           y = X,
