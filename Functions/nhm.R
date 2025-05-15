@@ -4,8 +4,7 @@ library(tictoc)
 
 
 
-apply_nhm <- function(pop_ms,misc, sim_obj, result_folder){
-  if (scenario=="B"){
+apply_nhm <- function(pop_ms,misc, sim_obj, result_folder,nsim){
     model_0 <- NULL
     model_misc <- NULL
     pop_ms$state <- pop_ms$MP
@@ -103,16 +102,13 @@ apply_nhm <- function(pop_ms,misc, sim_obj, result_folder){
         model = model_misc,
         time = t$toc - t$tic
       )
-      save(model_obj_m, file =paste0(result_folder,"/TIHMM_scenario_",scenario,"_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
+      save(model_obj_m, file =paste0(result_folder,"/TIHMM_scenario_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
       
     } else {
       cat("Model nhm_misc is NULL for dataset_id ",unique(pop_ms$dataset_id),". Model was not saved")
     
     }
     
-  }
-  else
-    stop("Insert a valid design type")
   print("nhm executed")
 }
 

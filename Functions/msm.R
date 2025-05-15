@@ -2,9 +2,8 @@ library(msm)
 library(tictoc)
 
 
-apply_msm <-function(pop_ms,misc,sim_obj, result_folder){
+apply_msm <-function(pop_ms,misc,sim_obj, result_folder,nsim){
   
-  if (scenario=="B"){
   # 2 state + death 
   q_matrix <- rbind(c(0,1,1),
                     c(0,0,1),
@@ -52,11 +51,10 @@ apply_msm <-function(pop_ms,misc,sim_obj, result_folder){
     model = model_age_misc,
     time = t$toc - t$tic
   )
-  save(model_obj_m_a, file =paste0(result_folder,"/ApproxTIHMM_scenario_",scenario,"_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
+  save(model_obj_m_a, file =paste0(result_folder,"/ApproxTIHMM_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
   
-  }
-  else
-    stop("Insert a valid design type")
+  
+  
 
   print("msm executed")
 }
