@@ -2,8 +2,11 @@
 
 apply_LCA <- function(pop, scenario_obj) {
   pop %<>% ungroup() 
-  X <- pop %>%  dplyr::select(any_of(colnames(scenario_obj$pattern_obj$obj$y))) %>% dplyr::mutate_all(function(x)
+  X <- pop %>%  dplyr::select(any_of(tolower(colnames(scenario_obj$pattern_obj$obj$y)))) %>%
+    dplyr::mutate_all(function(x)
     x + 1) %>% as.data.frame()
+  
+  if(ncol(X) !=ncol(scenario_obj$pattern_obj$obj$y))stop("Some diseases in the LCA model not found in the data!")
   
   post <- poLCA::poLCA.posterior(scenario_obj$pattern_obj$obj,
                           y = X,
