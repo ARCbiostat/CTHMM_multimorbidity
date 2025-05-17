@@ -1,8 +1,6 @@
 load("Data Simulation/schema_xb_3000_all.RData")
 data_mm <- as.data.frame(data_mm)
 debug(apply_LCA)
-apply_LCA(data_mm,LCA_obj)
+test <- apply_LCA(data_mm,LCA_obj)
+table(test$MP_sim,test$MP)
 
-
-
-test <- data_mm %>% drop_na()

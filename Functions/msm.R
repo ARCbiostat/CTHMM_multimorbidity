@@ -22,7 +22,7 @@ apply_msm <-function(pop_ms,misc,sim_obj, result_folder,nsim){
     time = t$toc - t$tic
   )
   
-  save(model_obj_a, file =paste0(result_folder,"/ApproxTIMM_scenario_",scenario,"_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
+  save(model_obj_a, file =paste0(result_folder,"/ApproxTIMM_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
   
   
   ### misc + age cov + 2 covariate
