@@ -1,6 +1,6 @@
 # auxiliary functions:
 create_unique_folder <- function(prefix = "results",study_type,nsim) {
-  timestamp <- format(Sys.time(), "%Y%m%d")
+  timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
   folder_name <- paste0(prefix, "_", timestamp,"_",study_type,"_",nsim)
   return(folder_name)
 }
@@ -55,9 +55,10 @@ run_multistate_wrapper <- function(dataset,result_folder,LCA_obj,nsim) {
   dataset<- apply_LCA(dataset,LCA_obj)
   gc()
   run_multistate(dataset,result_folder,LCA_obj,nsim)
+  gc()
 }
 
-run_analysis <- function(study_type,nsim,LCA_obj){
+run_analysis <- function(study_type,nsim,LCA_obj,avoid=NULL){
   #load data
   load(paste0("Data Simulation/schema_",study_type,"_",nsim,"_all.RData"))
   
@@ -65,9 +66,11 @@ run_analysis <- function(study_type,nsim,LCA_obj){
   # run in parallel, group pop by dataset_id
   cores <- min(detectCores() -5, 10) #modify number of cores
   plan(multisession, workers=cores)  # Or `plan(multiprocess)` for cross-platform compatibility
-  
-  datasets <- split(data_mm, data_mm$dataset_id)
-  
+
+  if(!is.null(avoid)){
+    data_mm %<>% filter(!(dataset_id%in%avoid))
+  }
+    datasets <- split(data_mm, data_mm$dataset_id)
   # create result folder using timestamp
   result_folder <-  file.path("results",create_unique_folder("results",study_type,nsim))
   dir.create(result_folder, recursive = TRUE)
