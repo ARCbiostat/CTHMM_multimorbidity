@@ -148,7 +148,7 @@ q0
 source("Functions//misc_matrix.R")
 
 X2 <- snack_base %>%ungroup() %>% dplyr::select(any_of(colnames(sim_obj$pattern_obj$obj$y))) %>% mutate_all(function(x)x+1)
-misc <- get_internal_validation_matrix(sim_obj$pattern_obj$obj, X2, covs =as.matrix(cbind(snack_base$Age), ncol=1) )
+§ <- get_internal_validation_matrix(sim_obj$pattern_obj$obj, X2, covs =as.matrix(cbind(snack_base$Age), ncol=1) )
 n <- dim(sim_obj$tmat)[1]
 misc <- add_death(misc, n-1)
 rownames(misc) <- rownames(sim_obj$tmat)
@@ -324,9 +324,89 @@ toc()
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
 save(model_misc2, file =paste0(result_folder,"/TIHMM_9cov_",timestamp,".RData"))
 
+##################################################
+######## TIMM and TIHMM: 7 covariates ############
+covm1 <- list(
+  educ_el = rbind(c(0,1,0), c(0,0,0), c(0,0,0)),
+  dm_sex = rbind(c(0,2,0), c(0,0,0), c(0,0,0)),
+  no_pa = rbind(c(0,3,0), c(0,0,0), c(0,0,0)),
+  life_alone = rbind(c(0,4,0), c(0,0,0), c(0,0,0)),
+  if_ever_smoke = rbind(c(0,5,0), c(0,0,0), c(0,0,0)),
+  heavy_alcool = rbind(c(0,6,0), c(0,0,0), c(0,0,0)),
+  sei_long_cat_dummy = rbind(c(0,7,0), c(0,0,0), c(0,0,0))
+  
+)
 
-####################################################
-########## TIMM and TIHMM: 6 covariates ############
+tic("nhm gompertz with 7 cov")
+model_obj_gomp3<- model.nhm(state ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
+                            nonh= nonh,
+                            covariates= c("educ_el", "dm_sex","no_pa" , "life_alone", "if_ever_smoke", "heavy_alcool", "sei_long_cat_dummy"),
+                            covm = covm1,
+                            death=T, death.states = 3)
+
+model_3 <- nhm(model_obj_gomp3,
+               #initial= nhm_init,
+               gen_inits = TRUE, #not converging
+               control=nhm.control(splits = c(60,61,63,65,75,76,85,95,99,102,103,105,109),
+                                   ncores = 16
+                                   #, verbose=TRUE
+               )
+)
+toc()
+
+nhm_init <- c(model_3$par)
+model_3.1 <- nhm(model_obj_gomp3,
+                 initial= nhm_init,
+                 #gen_inits = TRUE, #not converging
+                 control=nhm.control(splits = c(60,61,63,65,75,76,85,95,99,102,103,105,109),
+                                     ncores = 16
+                                     #, verbose=TRUE
+                 )
+)
+#
+timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+save(model_3.1, file =paste0(result_folder,"/TIMM_7cov_",timestamp,".RData"))
+
+
+# misc model
+non_diagonal <- misc
+diag(non_diagonal) <- 0
+misc_param <- non_diagonal[non_diagonal != 0]
+nhm_init <- c(model_3.1$par, log(misc_param))
+
+
+
+tic("nhm misc gompertz with 7 cov")
+model_obj_gomp_misc3<- model.nhm(state ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
+                                nonh= nonh,
+                                emat = misc_shape,
+                                covariates= c("educ_el", "dm_sex","no_pa" , "life_alone", "if_ever_smoke", "heavy_alcool", "sei_long_cat_dummy"),
+                                covm = covm1,
+                                death=T, death.states = 3)
+
+
+# misc parameters need to be passed to initial and then fixed in fixedpar
+n1<- length(model_3.1$par) + 1
+n2<- length(nhm_init)
+split_points <- c(60,61,63,65,75,76,85,95,99,102,103,105,106,109)
+
+model_misc3 <- nhm(
+  model_obj_gomp_misc3,
+  initial = nhm_init,
+  fixedpar = c(n1:n2),
+  control = nhm.control(
+    splits = split_points,
+    ncores = 16, 
+    rtol = 1e-8, 
+    atol = 1e-8
+  )
+)
+
+timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+save(model_misc3, file =paste0(result_folder,"/TIHMM_7cov_",timestamp,".RData"))
+
+##################################################
+######## TIMM and TIHMM: 6 covariates ############
 covm1 <- list(
   educ_el = rbind(c(0,1,0), c(0,0,0), c(0,0,0)),
   dm_sex = rbind(c(0,2,0), c(0,0,0), c(0,0,0)),
@@ -336,10 +416,10 @@ covm1 <- list(
   heavy_alcool = rbind(c(0,6,0), c(0,0,0), c(0,0,0))
 )
 
-tic("nhm gompertz with 6 cov")
+tic("nhm gompertz with 7 cov")
 model_obj_gomp1<- model.nhm(state ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
                             nonh= nonh,
-                            covariates= c("educ_el", "dm_sex","no_pa" , "life_alone", "if_ever_smoke", "heavy_alcool"),
+                            covariates= c("educ_el", "dm_sex","no_pa" , "life_alone", "if_ever_smoke", "heavy_alcool", "sei_long_cat_dummy"),
                             covm = covm1,
                             death=T, death.states = 3)
 
@@ -402,7 +482,7 @@ model_misc <- nhm(
 )
 
 timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
-save(model_misc, file =paste0(result_folder,"/TIHMM_6cov_",timestamp,".RData"))
+save(model_misc, file =paste0(result_folder,"/TIHMM_7cov_",timestamp,".RData"))
 
 ########################################
 ############ baseline hazard plots ##########
