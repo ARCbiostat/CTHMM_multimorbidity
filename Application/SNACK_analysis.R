@@ -148,7 +148,7 @@ q0
 source("Functions//misc_matrix.R")
 
 X2 <- snack_base %>%ungroup() %>% dplyr::select(any_of(colnames(sim_obj$pattern_obj$obj$y))) %>% mutate_all(function(x)x+1)
-§ <- get_internal_validation_matrix(sim_obj$pattern_obj$obj, X2, covs =as.matrix(cbind(snack_base$Age), ncol=1) )
+misc <- get_internal_validation_matrix(sim_obj$pattern_obj$obj, X2, covs =as.matrix(cbind(snack_base$Age), ncol=1) )
 n <- dim(sim_obj$tmat)[1]
 misc <- add_death(misc, n-1)
 rownames(misc) <- rownames(sim_obj$tmat)
