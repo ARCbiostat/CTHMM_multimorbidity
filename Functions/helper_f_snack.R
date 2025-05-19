@@ -262,31 +262,6 @@ extract_hr_estimates <- function(model,model_name, method) {
 plot_HR <- function(data) {
   data <- data %>%
     mutate(
-      Variable = factor(Variable, levels = rev(unique(Variable))),  # preserve order
-      jitter_y = as.numeric(Variable) + as.numeric(factor(model)) * 0.15  # stagger by model
-    )
-  
-  ggplot(data, aes(x = HR, color = model)) +
-    geom_point(aes(y = jitter_y), size = 3) +
-    geom_errorbarh(aes(y = jitter_y, xmin = L, xmax = U), height = 0.2) +
-    geom_vline(xintercept = 1, linetype = "dashed", color = "gray") +
-    scale_x_continuous(limits = c(0.5, 2)) +
-    scale_y_continuous(
-      breaks = seq_along(levels(data$Variable)),
-      labels = rev(levels(data$Variable))  # match ordering
-    ) +
-    labs(x = "Hazard Ratio", y = "", title = "Hazard Ratios in Transition from Mild to COmplex MM by Covariate and Model") +
-    theme_prism(border = TRUE) +
-    theme(
-      legend.title = element_blank(),
-      legend.position = "right",
-      axis.text.y = element_text(size = 10)
-    )
-}
-plot_HR <- function(data) {
-  # Ensure factor with desired order
-  data <- data %>%
-    mutate(
       Variable = factor(Variable, levels = rev(unique(Variable))),
       model_offset = as.numeric(factor(model)),
       y_pos = as.numeric(Variable) + (model_offset - mean(unique(model_offset))) * 0.2  # center around original position
@@ -305,12 +280,12 @@ plot_HR <- function(data) {
     labs(
       x = "Hazard Ratio", 
       y = "", 
-      title = "Hazard Ratios in Transition from Mild to Complex MM by Covariate and Model"
+      title = "Transition from Mild to Complex MM"
     ) +
-    theme_prism(border = TRUE) +
+    theme_prism() +
     theme(
       legend.title = element_blank(),
-      legend.position = "right",
+      legend.position = "bottom",
       axis.text.y = element_text(size = 10)
     )
 }

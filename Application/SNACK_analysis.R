@@ -735,8 +735,9 @@ n <- dim(snack_nhm)[1]
 t_vals <- seq(60, 90, length.out = 100)
 
 # female (blu) vs male (red)
-plot.nhm.mine(model_misc, what= "intensity",trans = 1, covvalue = c(0,1,0,0,0,0), colours = c("blue","red"), colours_fill = c("lightblue","pink"),
-               labels = c("Female","Male"), time0=60, times= t_vals, main_arg= "Hazard function", xlab="Age")
+plot_fm <-plot.nhm.mine2(model_misc, what= "intensity",trans = 1, covvalue = c(0,1,0,0,0,0), colours = c("blue","red"), colours_fill = c("lightblue","pink"),
+               labels = c("Female","Male"), time0=60, times= t_vals, main_arg= "Transition Mild to Complex MM", xlab="Age")
+plot_fm
 # no physical activity (orange) vs physical activity (green)
 plot.nhm.mine(model_misc, what= "intensity",trans = 1, covvalue = c(0,0,1,0,0,0), colours = c("darkorange","forestgreen"), colours_fill = c("moccasin","#ccffcc"),
                labels = c("No physical activity","Physical activity"), time0=60, times= t_vals, main_arg= "Hazard function", xlab="Age")
@@ -790,5 +791,8 @@ HR_est_6cov <- HR_est_6cov %>%
 
 plot_HR(HR_est_9cov)
 plot_HR(HR_est_6cov)
+
+
+
 
 
