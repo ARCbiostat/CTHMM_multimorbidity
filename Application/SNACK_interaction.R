@@ -45,3 +45,49 @@ model_p2 <- msm(MP ~ Age, subject=lopnr, data=snack_nhm, qmatrix= q0,
 model_p2
 
 
+###### NHM #######
+q_nhm <- rbind(c(0,1,2),
+               c(0,0,3),
+               c(0,0,0))
+colnames(q_nhm)<-c(1:dim(q_nhm)[1])
+rownames(q_nhm)<-c(1:dim(q_nhm)[1])
+# same structure for q_mat and nonh
+nonh <- q_nhm
+
+covm1 <- list(
+  educ_el = rbind(c(0,1,0), c(0,0,0), c(0,0,0)),
+  dm_sex = rbind(c(0,2,0), c(0,0,0), c(0,0,0)),
+  no_pa = rbind(c(0,3,0), c(0,0,0), c(0,0,0)),
+  life_alone = rbind(c(0,4,0), c(0,0,0), c(0,0,0)),
+  heavy_alcool = rbind(c(0,5,0), c(0,0,0), c(0,0,0)),
+  if_ever_smoke = rbind(c(0,6,0), c(0,0,0), c(0,0,0)),
+   sei_long_cat_dummy = rbind(c(0,7,0), c(0,0,0), c(0,0,0))
+)
+
+tic("nhm 7 cov interaction")
+model_obj_gomp2<- model.nhm(state ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
+                            nonh= nonh,
+                            covariates= c("educ_el", "dm_sex","no_pa" , "life_alone",  "heavy_alcool","if_ever_smoke", "sei_long_cat_dummy"),
+                            covm = covm1,
+                            death=T, death.states = 3)
+
+model_2 <- nhm(model_obj_gomp2,
+               #initial= nhm_init,
+               gen_inits = TRUE, #not converging
+               control=nhm.control(splits = c(60,61,63,65,75,76,85,95,99,102,103,105,109),
+                                   ncores = detectCores()-2
+                                   #, verbose=TRUE
+               )
+)
+toc()
+
+misc_shape <- rbind(c(0,2,0),
+                    c(1,0,0),
+                    c(0,0,0))
+tic()
+model_obj_gomp_misc<- model.nhm(state ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
+                                nonh= nonh,
+                                emat = misc_shape,
+                                covariates= c("educ_el", "dm_sex","no_pa" , "life_alone",  "heavy_alcool","if_ever_smoke", "sei_long_cat_dummy"),
+                                covm = covm1,
+                                death=T, death.states = 3)
