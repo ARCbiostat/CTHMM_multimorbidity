@@ -55,12 +55,6 @@ rownames(q_nhm)<-c(1:dim(q_nhm)[1])
 nonh <- q_nhm
 
 snack_nhm$sei_long_cat_dummy_sex <- snack_nhm$dm_sex*snack_nhm$sei_long_cat_dummy
-snack_nhm$no_pa_sex <- snack_nhm$no_pa * snack_nhm$dm_sex
-snack_nhm$educ_el_sex <- snack_nhm$educ_el * snack_nhm$dm_sex
-snack_nhm$life_alone_sex <- snack_nhm$life_alone * snack_nhm$dm_sex
-snack_nhm$heavy_alcool_sex <- snack_nhm$heavy_alcool * snack_nhm$dm_sex
-snack_nhm$if_ever_smoke_sex <- snack_nhm$if_ever_smoke * snack_nhm$dm_sex
-
 covm_int <- list(
   educ_el = rbind(c(0,1,0), c(0,0,0), c(0,0,0)),
   dm_sex = rbind(c(0,2,0), c(0,0,0), c(0,0,0)),
@@ -69,22 +63,13 @@ covm_int <- list(
   heavy_alcool = rbind(c(0,5,0), c(0,0,0), c(0,0,0)),
   if_ever_smoke = rbind(c(0,6,0), c(0,0,0), c(0,0,0)),
   sei_long_cat_dummy = rbind(c(0,7,0), c(0,0,0), c(0,0,0)),
-  
-  educ_el_sex = rbind(c(0,8,0), c(0,0,0), c(0,0,0)),
-  no_pa_sex = rbind(c(0,9,0), c(0,0,0), c(0,0,0)),
-  life_alone_sex = rbind(c(0,10,0), c(0,0,0), c(0,0,0)),
-  heavy_alcool_sex = rbind(c(0,11,0), c(0,0,0), c(0,0,0)),
-  if_ever_smoke_sex = rbind(c(0,12,0), c(0,0,0), c(0,0,0)),
-  sei_long_cat_dummy_sex = rbind(c(0,13,0), c(0,0,0), c(0,0,0))
+  sei_long_cat_dummy_sex = rbind(c(0,8,0), c(0,0,0), c(0,0,0))
 )
-
 
 tic("nhm 7 cov interaction")
 model_obj_gomp2<- model.nhm(state ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
                             nonh= nonh,
-                            covariates= c("educ_el", "dm_sex","no_pa" , "life_alone",  "heavy_alcool","if_ever_smoke", "sei_long_cat_dummy",
-                                          "educ_el_sex", "no_pa_sex", "life_alone_sex","heavy_alcool_sex","if_ever_smoke_sex",
-                                          "sei_long_cat_dummy_sex")
+                            covariates= c("educ_el", "dm_sex","no_pa" , "life_alone",  "heavy_alcool","if_ever_smoke", "sei_long_cat_dummy", "sei_long_cat_dummy_sex"),
                             covm = covm_int,
                             death=T, death.states = 3)
 
@@ -97,7 +82,8 @@ model_int_sex_7 <- nhm(model_obj_gomp2,
                )
 )
 toc()
-
+timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+save(model_int_sex_7, file =paste0(result_folder,"/TIMM_7int_",timestamp,".RData"))
 misc_shape <- rbind(c(0,2,0),
                     c(1,0,0),
                     c(0,0,0))
@@ -105,9 +91,9 @@ tic()
 model_int_sex_7_misc<- model.nhm(state ~ Age, subject=lopnr, type='gompertz', data=snack_nhm, trans= q_nhm,
                                 nonh= nonh,
                                 emat = misc_shape,
-                                covariates= c("educ_el", "dm_sex","no_pa" , "life_alone",  "heavy_alcool","if_ever_smoke", "sei_long_cat_dummy",
-                                              "educ_el_sex", "no_pa_sex", "life_alone_sex","heavy_alcool_sex","if_ever_smoke_sex",
-                                              "sei_long_cat_dummy_sex"),
+                                covariates= c("educ_el", "dm_sex","no_pa" , "life_alone",  "heavy_alcool","if_ever_smoke", "sei_long_cat_dummy"),
                                 covm = covm1,
                                 death=T, death.states = 3)
 toc()
+timestamp <- format(Sys.time(), "%Y%m%d_%H%M%S")
+save(model_int_sex_7_misc, file =paste0(result_folder,"/TIHMM_7int_",timestamp,".RData"))
