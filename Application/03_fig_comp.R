@@ -1,11 +1,32 @@
 library(mvtnorm)
+library(MMLCA)
+library(ggplot2)
+library(ggprism)
 
+
+### alluvial plot
+
+snack_nhm$Age_disc<- snack_nhm$Age/3
+snack_nhm$MP_label <- factor(as.factor(snack_nhm$MP), levels = as.character(c(1,2,3)), labels = c("Mild MM", "Complex MM","Death"))
+
+all_snack <- ggalluvial(
+  snack_nhm,
+  time_var = "Age_disc",
+  "lopnr",
+  "MP_label",
+  colors= c("lightblue", "dodgerblue", "grey"),
+  space = 20,
+  "Death"
+)
+
+all_snack$plot+scale_x_continuous("Age",breaks = seq(20,35,by=2),labels = c("60-63","66-69", "72-75", "78-81", "84-87", "90-93", "96-99", "100+"))
+
+
+
+### transition to Death
 t_vals <- seq(60, 90, length.out = 100)
 
 preds <- predict.nhm.mine(model_misc3, times=t_vals, flag="Transition Probability", time0=60)
-#plot.nhm.mine2(model_misc3, times=seq(60,95,1), flag="Transition Probability")
-#plot.nhm.mine(model_misc3, flag="Transition Probability", what= "probabilities",time0=60, times= t_vals, main_arg= "Hazard function", xlab="Age")
-
 nstate <- model_misc3$nstate
 prevalence <- preds$probabilities
 times <- preds$times
@@ -35,7 +56,7 @@ trans_death_data=data.frame(age=rep(times,2),
 
 
 trans_death_data$from=factor(as.factor(trans_death_data$from),levels = c("From Mild MM", "From Complex MM"))
-Fig_appl_res3=ggplot(trans_death_data)+
+Fig_appl_4b=ggplot(trans_death_data)+
   geom_line(aes(age,prob,group=from,color=from),linewidth=1)+
   geom_ribbon(aes(age,ymin=lower,ymax=upper,group=from,fill=from),alpha=0.3)+
   scale_fill_manual(values = c("lightblue", "dodgerblue"))+
@@ -46,9 +67,43 @@ Fig_appl_res3=ggplot(trans_death_data)+
   theme_prism()+
   theme(legend.position = "bottom")
 
-Fig_appl_res3
-#########################################################################################################
+Fig_appl_4b
 
+############ HR ratio
+# helper functions in helper_f_snack.R
+HR_est_7cov <- data.frame()
+HR_est_7cov <- rbind(HR_est_7cov, 
+                     extract_hr_estimates(model_misc3, "TIHMM", "nhm"))
+HR_est_7cov <- HR_est_7cov %>%
+  mutate(Variable = recode(Variable,
+                           "if_ever_smoke"        = "Smoking (Y/N)",
+                           "dm_sex"               = "Sex (F/M)",
+                           "no_pa"                = "Sedentarism (Y/N)",
+                           "life_alone"           = "Living alone (Y/N)",
+                           "educ_el"              = "Elementary Education (Y/N)",
+                           "heavy_alcool"         = "Alcohol (Y/N)",
+                           "sei_long_cat_dummy"   = "Manual occupation (Y/N)" 
+  ))
+
+HR_est_7cov$Variable <- factor(HR_est_7cov$Variable, levels = rev(unique(HR_est_7cov$Variable)))
+
+Fig_appl_4a <- ggplot(HR_est_7cov, aes(x = HR, y = Variable)) +
+  geom_point(size = 4) +
+  geom_errorbarh(aes(xmin = L, xmax = U), height = 0.2, size=1.2) +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "gray") +
+  scale_x_continuous(limits = c(0.5, 2)) +
+  labs(
+    x = "Hazard Ratio", 
+    y = "", 
+    title = "Transition from Mild to Complex MM"
+  ) +
+  theme_prism() +
+  theme(
+    axis.text.y = element_text(size = 10)
+  )
+Fig_appl_4a
+
+########## Transition mild to complex MM by covariates
 
 fix_pred_complex=function(model,preds,lab){
   nstate <- model$nstate
@@ -110,7 +165,7 @@ pred_nopa<- predict.nhm.mine(model_misc3,
                                   flag="Transition Probability", time0=60,
                                   covvalue =covvalue)
 
-data_pred_nopa=fix_pred_complex(model_misc3,pred_nopa,lab = "No")
+data_pred_nopa=fix_pred_complex(model_misc3,pred_nopa,lab = "Yes")
 
 covvalue[3]=0
 pred_pa <- predict.nhm.mine(model_misc3, 
@@ -119,7 +174,7 @@ pred_pa <- predict.nhm.mine(model_misc3,
                                     covvalue =covvalue)
 
 
-data_pred_pa=fix_pred_complex(model_misc3,pred_pa,lab = "Yes")
+data_pred_pa=fix_pred_complex(model_misc3,pred_pa,lab = "No")
 data_pred_paall=rbind(data_pred_nopa,data_pred_pa)
 
 
@@ -131,7 +186,7 @@ Fig_appl_res2b=ggplot(data_pred_paall)+
   scale_color_manual(values = c("forestgreen", "orange"))+
   scale_x_continuous("Age (years)")+
   scale_y_continuous("Probability",limits = c(0,0.7))+
-  ggtitle("Physical Activity")+
+  ggtitle("Sedentarism")+
   theme_prism()+
   theme(legend.position = "bottom")
 
@@ -144,26 +199,24 @@ ggpubr::ggarrange(Fig_appl_res2a,Fig_appl_res2b)
 
 
 
+# pred_mean <- predict.nhm.mine(model_misc3, 
+#                                     times=t_vals, 
+#                                     flag="Transition Probability", time0=60)
+# 
+# 
+# data_pred_mean=fix_pred_complex(model_misc3,pred_mean,lab = "Mean")
+# 
+# 
+# Fig_appl_res2=ggplot(data_pred_mean)+
+#   geom_line(aes(age,prob),linewidth=1)+
+#   geom_ribbon(aes(age,ymin=lower,ymax=upper),alpha=0.3)+
+#   scale_x_continuous("Age (years)")+
+#   scale_y_continuous("Probability",limits = c(0,0.7))+
+#   ggtitle("From Mild to Complex MM")+
+#   theme_prism()+
+#   theme(legend.position = "bottom")
+# 
+# Fig_appl_res2
 
 
-pred_mean <- predict.nhm.mine(model_misc3, 
-                                    times=t_vals, 
-                                    flag="Transition Probability", time0=60)
 
-
-data_pred_mean=fix_pred_complex(model_misc3,pred_mean,lab = "Mean")
-
-
-Fig_appl_res2=ggplot(data_pred_mean)+
-  geom_line(aes(age,prob),linewidth=1)+
-  geom_ribbon(aes(age,ymin=lower,ymax=upper),alpha=0.3)+
-  scale_x_continuous("Age (years)")+
-  scale_y_continuous("Probability",limits = c(0,0.7))+
-  ggtitle("From Mild to Complex MM")+
-  theme_prism()+
-  theme(legend.position = "bottom")
-
-Fig_appl_res2
-
-
-ggsave(Fig_appl_res2,filename="")
