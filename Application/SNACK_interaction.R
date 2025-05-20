@@ -128,7 +128,7 @@ model_int_sex_7_misc <- nhm(
   fixedpar = c(n1:n2),
   control = nhm.control(
     splits = split_points,
-    ncores = detectCores()-2, 
+    ncores = 16, 
     rtol = 1e-8, 
     atol = 1e-8
   )
