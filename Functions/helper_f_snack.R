@@ -505,7 +505,7 @@ plot_hazard_snack_ci <- function(pm_df, t_vals, nsim = NULL, ST = NULL) {
 }
 
 
-plot.nhm.mine <- function (x, what = "probabilities", time0 = 0, state0 = 1, times = NULL, trans = NULL,
+plot.nhm.mine <- function (x, what = "probabilities", flag= " ", time0 = 0, state0 = 1, times = NULL, trans = NULL,
                            covvalue = NULL, ci = TRUE, sim = FALSE, coverage = 0.95, labels=NULL, colours=NULL,colours_fill=NULL,
                            B = 1000, rtol = 1e-06, atol = 1e-06, main_arg = NULL, xlab = "Time") {
   opar <- par(no.readonly = TRUE)
@@ -600,7 +600,7 @@ plot.nhm.mine <- function (x, what = "probabilities", time0 = 0, state0 = 1, tim
   if (what == "probabilities") {
     if (is.null(main_arg)) 
       main_arg <- "Probability in state "
-    preds <- predict.nhm.mine(model, time0, state0, times, covvalue, 
+    preds <- predict.nhm.mine(model, flag, time0, state0, times, covvalue, 
                               ci, sim, coverage, B, rtol, atol)
     nstate <- model$nstate
     prevalence <- preds$probabilities
@@ -787,7 +787,7 @@ plot.nhm.mine <- function (x, what = "probabilities", time0 = 0, state0 = 1, tim
 }
 
 
-plot.nhm.mine2 <- function (x, what = "probabilities", time0 = 0, state0 = 1, times = NULL, trans = NULL,
+plot.nhm.mine2 <- function (x, what = "probabilities", flag= " ", time0 = 0, state0 = 1, times = NULL, trans = NULL,
                            covvalue = NULL, ci = TRUE, sim = FALSE, coverage = 0.95, labels=NULL, colours=NULL,colours_fill=NULL,
                            B = 1000, rtol = 1e-06, atol = 1e-06, main_arg = NULL, xlab = "Time") {
   opar <- par(no.readonly = TRUE)
@@ -882,7 +882,7 @@ plot.nhm.mine2 <- function (x, what = "probabilities", time0 = 0, state0 = 1, ti
   if (what == "probabilities") {
     if (is.null(main_arg)) 
       main_arg <- "Probability in state "
-    preds <- predict.nhm.mine(model, time0, state0, times, covvalue, 
+    preds <- predict.nhm.mine(model, flag, time0, state0, times, covvalue, 
                               ci, sim, coverage, B, rtol, atol)
     nstate <- model$nstate
     prevalence <- preds$probabilities
@@ -1071,7 +1071,7 @@ plot.nhm.mine2 <- function (x, what = "probabilities", time0 = 0, state0 = 1, ti
 
 
 
-predict.nhm.mine <- function (object, time0 = 0, state0 = 1, times = NULL, covvalue = NULL, 
+predict.nhm.mine <- function (object, time0 = 0, flag= " ", state0 = 1, times = NULL, covvalue = NULL, 
                               ci = TRUE, sim = FALSE, coverage = 0.95, B = 1000, rtol = 1e-06, 
                               atol = 1e-06) {
   model <- object
@@ -1159,7 +1159,16 @@ predict.nhm.mine <- function (object, time0 = 0, state0 = 1, times = NULL, covva
                         parms = parms, intens = intens)
   res2 <- array(res[, 2:(nstate^2 + 1)], c(length(times), nstate, 
                                            nstate))
-  prevalence <- res2[, state0, ]
+  
+  if (flag =="Transition Probability"){
+    state1<- res2[,state0, c(2,3)]
+    state2 <- res2[, state0+1, 3]
+    prevalence <- cbind(state1, state2)
+  }else{
+    prevalence <- res2[, state0, ]
+  }
+  
+  
   if (ci) {
     if (sim) {
       sig <- solve(fisher)[1:npar, 1:npar]
@@ -1179,7 +1188,13 @@ predict.nhm.mine <- function (object, time0 = 0, state0 = 1, times = NULL, covva
                               atol = atol, parms = parms, intens = intens)
         res2 <- array(res[, 2:(nstate^2 + 1)], c(length(times), 
                                                  nstate, nstate))
-        prevB[, , i] <- res2[, state0, ]
+        if (flag =="Transition Probability"){
+          state1<- res2[,state0, c(2,3)]
+          state2 <- res2[, state0+1, 3]
+          prevB[, , i] <- cbind(state1, state2)
+        }else{
+          prevB[, , i] <- res2[, state0, ]
+        }
       }
       const <- 0.5 * (1 - coverage)
       prevL <- apply(prevB, c(1, 2), function(x) sort(x)[B * 
@@ -1203,7 +1218,17 @@ predict.nhm.mine <- function (object, time0 = 0, state0 = 1, times = NULL, covva
                                                 nstate^2 + 1)], c(length(times), nstate, nstate))
         dp0[, , , l] <- q0
       }
-      dprev <- dp0[, state0, , ]
+     
+      if (flag =="Transition Probability"){
+        state1<- dp0[,state0, c(2,3), ]
+        state2 <- dp0[, state0+1, 3, ]
+        state2 <- array(state2, dim = c(length(times), 1, npar))
+        dprev <- abind::abind(state1, state2, along = 2)  
+        
+      }else{
+        dprev <- dp0[, state0, , ]
+      }
+      
       vars <- array(0, c(length(times), nstate))
       for (k in 1:length(times)) {
         for (l in 1:nstate) {
