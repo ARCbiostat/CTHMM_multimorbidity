@@ -114,8 +114,10 @@ get_estimates <- function(model, model_name, i,j=0){
   trans <-numeric()
   beta_cov1 <- numeric()
   beta_cov2 <-numeric()
+  beta_cov3 <-numeric()
   beta_cov1_se <- numeric()
   beta_cov2_se <- numeric()
+  beta_cov3_se <- numeric()
 
   if(model_name %in% c("benchmark_model"))
   {   
