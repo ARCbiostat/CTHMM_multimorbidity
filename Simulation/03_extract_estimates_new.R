@@ -23,7 +23,7 @@ library(tidyverse)
 #################### Extract estimates from fitted model #################
 ###########################################################################################
 
-source("Functions//extract_performance.R")
+source("Functions//aux_extract_estimates.R")
 
 # folder where estimates will be saved
 result_folder <-  "results/results_estimates"
@@ -59,25 +59,41 @@ for (i in 1:ntrans){
 }
 true_param
 
+
+models<-c("TIMM","TIHMM","ApproxTIMM", "ApproxTIHMM","benchmark_model")
+
  
 ####################################################################
 #################### pop-based study 3/6 years ##################### 
 ####################################################################
 
-models<-c("TIMM","TIHMM","ApproxTIMM", "ApproxTIHMM","benchmark_model")
+## 3000 
+model_est_xb_3000 <- load_and_extract_est(results_path =paste0("Simulation/results/results_20250516_xb_3000","/"), nsim=3000,
+                                           N=100, st="xb",models=models)
+## 10000
+model_est_xb_10000 <- load_and_extract_est(results_path =paste0("Simulation/results/results_20250517_081436_xb_10000","/"), nsim=10000,
+                                           N=100, st="xb",models=models)
+####################################################################
+#################### irregular observations ######################## 
+####################################################################
 
+### 3000
+model_est_xc_3000 <- load_and_extract_est(results_path =paste0("Simulation/results/results_20250517_141958_xc_3000","/"), nsim=10000,
+                                           N=100, st="xc",models=models)
+### 10000
+model_est_xc_10000 <- load_and_extract_est(results_path =paste0("Simulation/results/results_20250517_190836_xc_10000","/"), nsim=10000,
+                                           N=100, st="xc",models=models)
 ## load desired models
 nsim<-10000
 N <-100 # total number of datasets
-st <- "rv"
+st <- "xc"
 
 # folder from where
-results_path <- paste0("Simulation/results/results_20250120_160025_rv","/")
-scenario <- "B"
+results_path <- paste0("Simulation/results/results_20250517_190836_xc_10000","/")
 
 load_model <- FALSE
 if (load_model){
-  pt <-load(paste0("results/results_estimates/model_est_",scenario,"_",nsim,".RData"))
+  pt <-load(paste0("results/results_estimates/model_est_",st,"_",nsim,".RData"))
   param <- get(pt)
   param_df <- param$param_df
   conv_time <- param$time_df
@@ -105,7 +121,7 @@ if (load_model){
   for(model_name in models){
     print(model_name)
     for(i in 1:N){
-      model_file <- paste0(results_path, model_name, "_scenario_", scenario, "_", nsim, "_", i, ".RData")
+      model_file <- paste0(results_path, model_name, "_", nsim, "_", i, ".RData")
       model_n <- tryCatch({
         load(model_file)
       }, error = function(e) {
@@ -116,7 +132,7 @@ if (load_model){
       if (is.null(model_n)) {
         next
       }
-      model_n <-load(paste0(results_path,model_name,"_scenario_",scenario,"_",nsim,"_",i,".RData"))
+      model_n <-load(paste0(results_path,model_name,"_",nsim,"_",i,".RData"))
       model <- get(model_n)
       conv_time <- rbind(conv_time, data.frame(dataset_id = i, model_name = model_name, time=model$time))
       #print(param_df)
@@ -134,7 +150,7 @@ model_est <-list(
 )
 
 if (!load_model){
-  save(model_est, file =paste0(result_folder,"/model_est_",st,"_",scenario,"_", nsim,".RData"))
+  save(model_est, file =paste0(result_folder,"/model_est_",st,"_", nsim,".RData"))
 }
 
 
