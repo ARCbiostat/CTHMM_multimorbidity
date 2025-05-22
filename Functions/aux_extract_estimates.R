@@ -294,8 +294,13 @@ load_and_extract_est <- function(results_path, nsim, N, st, models, load_model=F
         if (is.null(model_n)) {
           next
         }
+
         model_n <-load(paste0(results_path,model_name,"_",nsim,"_",i,".RData"))
         model <- get(model_n)
+        if (model_name=="ApproxTIHMM" & is.null(model$model$covmat)){
+          print(paste(i,"skipped"))
+          next
+        }
         conv_time <- rbind(conv_time, data.frame(dataset_id = i, model_name = model_name, time=model$time))
         #print(param_df)
         param_df <- rbind(param_df,get_estimates(model, model_name,i))
@@ -311,4 +316,5 @@ load_and_extract_est <- function(results_path, nsim, N, st, models, load_model=F
   if (!load_model){
     save(model_est, file =paste0(result_folder,"/model_est_",st,"_", nsim,".RData"))
   }
+  return(model_est)
 }

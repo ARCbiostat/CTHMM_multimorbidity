@@ -43,7 +43,7 @@ run_multistate <- function(pop_ms,result_folder,LCA_obj,nsim){
   
   misc <- calculate_m_matrix(pop_ms,1,LCA_obj)
  
-  apply_flexsurv_base(pop_ms, LCA_obj, result_folder,nsim)
+  
   apply_msm(pop_ms,misc, LCA_obj, result_folder,nsim)
   gc()
   apply_nhm(pop_ms,misc, LCA_obj,result_folder,nsim)
@@ -79,6 +79,32 @@ run_analysis <- function(study_type,nsim,LCA_obj,avoid=NULL){
   options(future.globals.maxSize=1*1e10)
   #lapply(datasets, function(x)run_multistate_wrapper(x,result_folder,LCA_obj,nsim))
   future_lapply(datasets, FUN = function(x)run_multistate_wrapper(x,result_folder,LCA_obj,nsim))
+  toc()
+  
+  
+}
+
+run_analysis_benchmark <- function(nsim,LCA_obj,avoid=NULL){
+  #load data
+  load(paste0("Data Simulation/",nsim,"_all_ETES.RData"))
+  
+  ########### split by dataset_id #########
+  # run in parallel, group pop by dataset_id
+  cores <- min(detectCores() -5, 10) #modify number of cores
+  plan(multisession, workers=cores)  # Or `plan(multiprocess)` for cross-platform compatibility
+  
+  if(!is.null(avoid)){
+    data_mm_long %<>% filter(!(dataset_id%in%avoid))
+  }
+  datasets <- split(data_mm_long, data_mm_long$dataset_id)
+  # create result folder using timestamp
+  result_folder <-  file.path("results",create_unique_folder("results","benchmark",nsim))
+  dir.create(result_folder, recursive = TRUE)
+  # call function to apply nhm, msm, and flexsurv in parallel
+  tic("Multistate in parallel")
+  options(future.globals.maxSize=1*1e10)
+  #lapply(datasets, function(x)run_multistate_wrapper(x,result_folder,LCA_obj,nsim))
+  future_lapply(datasets, FUN = function(x)apply_flexsurv_base(x, LCA_obj, result_folder,nsim))
   toc()
   
   
