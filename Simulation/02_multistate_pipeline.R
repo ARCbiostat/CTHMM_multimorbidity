@@ -29,6 +29,15 @@ source("Functions/aux_sim_run.R")
 load("Data Simulation/LCA object.RData")
 
 ####################################################################
+#################### BENCHMARK                ##################### 
+####################################################################
+
+#3000
+run_analysis_benchmark(nsim = 3000,LCA_obj = LCA_obj)
+
+#10000
+run_analysis_benchmark(nsim = 10000,LCA_obj = LCA_obj)
+####################################################################
 #################### pop-based study 3/6 years ##################### 
 ####################################################################
 
@@ -44,7 +53,7 @@ run_analysis(study_type = "xb",nsim = 10000,LCA_obj = LCA_obj)
 # 3000
 run_analysis(study_type = "xc",nsim = 3000,LCA_obj = LCA_obj)
 # 10 000
-run_analysis(study_type = "xc",nsim = 10000,LCA_obj = LCA_obj)
+run_analysis(study_type = "xc",nsim = 10000,LCA_obj = LCA_obj, avoid= c(1:22, 31:50, 71:100))
 
 
 
