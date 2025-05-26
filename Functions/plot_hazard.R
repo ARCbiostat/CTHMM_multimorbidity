@@ -233,7 +233,7 @@ plot_cum_hazard<- function(pm_df, true_param, t_vals, nsim=NULL){
   }
 }
 
-eval_cum_hazard <- function(pm_df, true_param, t_vals, nsim=NULL, ST=NULL){
+eval_cum_hazard <- function(pm_df, true_param, t_vals, nsim=NULL){
   N <- length(t_vals)
   eval_cm <- data.frame()
   for (i in unique(true_param$trans)){
@@ -246,16 +246,7 @@ eval_cum_hazard <- function(pm_df, true_param, t_vals, nsim=NULL, ST=NULL){
       model = "True"
     )
     
-    if (!is.null(ST)){
-      mp <- mp %>%
-        filter(
-          model=="ETES" |
-          (ST== "PS" & grepl("^PS_", model)) |
-            (ST == "IV" & grepl("^IV_", model)) |
-            !(ST %in% c("PS", "IV")) # Keep all models for other study types
-        )
-    }
-    
+
     
     model_ids <- unique(mp$model)
     

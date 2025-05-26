@@ -326,6 +326,21 @@ save(model_misc2, file =paste0(result_folder,"/TIHMM_9cov_",timestamp,".RData"))
 
 ##################################################
 ######## TIMM and TIHMM: 7 covariates ############
+snack_nhm_7 <- snack_nhm %>% drop_na(sei_long_cat_dummy)
+snack_base_7 <- snack_nhm_7 %>%
+  group_by(lopnr) %>%
+  slice_head()
+snack_death_7 <- snack_nhm_7%>% filter(MP==3)
+tapply(snack_death_7$Age, snack_death_7$dm_sex, summary) 
+table(snack_base_7$MP)/2716
+
+table(snack_base_7$dm_sex)/2716
+
+tapply(snack_base_7$Age, snack_base_7$dm_sex, summary)
+snack_nhm <- snack_2_filtered
+snack_nhm$state <- snack_nhm$MP
+
+
 covm1 <- list(
   educ_el = rbind(c(0,1,0), c(0,0,0), c(0,0,0)),
   dm_sex = rbind(c(0,2,0), c(0,0,0), c(0,0,0)),
