@@ -6,11 +6,11 @@ library(ggprism)
 
 ### alluvial plot
 
-snack_nhm$Age_disc<- snack_nhm$Age/3
-snack_nhm$MP_label <- factor(as.factor(snack_nhm$MP), levels = as.character(c(1,2,3)), labels = c("Mild MM", "Complex MM","Death"))
+snack_nhm_7$Age_disc<- snack_nhm_7$Age/3
+snack_nhm_7$MP_label <- factor(as.factor(snack_nhm_7$MP), levels = as.character(c(1,2,3)), labels = c("Mild MM", "Complex MM","Death"))
 
 all_snack <- ggalluvial(
-  snack_nhm,
+  snack_nhm_7,
   time_var = "Age_disc",
   "lopnr",
   "MP_label",
@@ -74,16 +74,23 @@ Fig_appl_4b
 HR_est_7cov <- data.frame()
 HR_est_7cov <- rbind(HR_est_7cov, 
                      extract_hr_estimates(model_misc3, "TIHMM", "nhm"))
+
+
+HR_est_7cov["dm_sex",2] <- 1/HR_est_7cov["dm_sex",2]
+HR_est_7cov["dm_sex", c(3, 4)] <- 1 / rev(HR_est_7cov["dm_sex", c(3, 4)])
+
 HR_est_7cov <- HR_est_7cov %>%
   mutate(Variable = recode(Variable,
                            "if_ever_smoke"        = "Smoking (Y/N)",
-                           "dm_sex"               = "Sex (F/M)",
+                           "dm_sex"               = "Sex (M/F)",
                            "no_pa"                = "Sedentarism (Y/N)",
                            "life_alone"           = "Living alone (Y/N)",
                            "educ_el"              = "Elementary Education (Y/N)",
                            "heavy_alcool"         = "Alcohol (Y/N)",
                            "sei_long_cat_dummy"   = "Manual occupation (Y/N)" 
   ))
+
+
 
 HR_est_7cov$Variable <- factor(HR_est_7cov$Variable, levels = rev(unique(HR_est_7cov$Variable)))
 
