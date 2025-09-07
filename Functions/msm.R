@@ -44,7 +44,7 @@ apply_msm <-function(pop_ms,misc,sim_obj, result_folder,nsim){
                         initprobs = c(0.8,0.2,0),
                         covariates = ~ age + cov1 + cov2 + cov3,
                         ematrix=misc, 
-                        fixedpars= c((n1+1):n2), # da modificare 
+                        fixedpars= c((n1+1):n2), 
                         control = list(fnscale = 20000))
   t<- toc()
   model_obj_m_a <- list(
@@ -52,6 +52,22 @@ apply_msm <-function(pop_ms,misc,sim_obj, result_folder,nsim){
     time = t$toc - t$tic
   )
   save(model_obj_m_a, file =paste0(result_folder,"/ApproxTIHMM_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
+  tic("msm age + cov misc 2")
+  model_age_misc2 <- msm(MP ~ age, subject=subject_id, data=pop_ms, 
+                         qmatrix= model_age_misc$Qmatrices$baseline,
+                        deathexact = 3,
+                        initprobs = c(0.8,0.2,0),
+                        est.initprobs=T,
+                        covariates = ~ age + cov1 + cov2 + cov3,
+                        ematrix=misc, 
+                        #fixedpars= c((n1+1):n2), 
+                        control = list(fnscale = 20000))
+  t<- toc()
+  model_obj_m_a2 <- list(
+    model = model_age_misc2,
+    time = t$toc - t$tic
+  )
+  save(model_obj_m_a2, file =paste0(result_folder,"/ApproxTIHMMv2_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
   
   
   

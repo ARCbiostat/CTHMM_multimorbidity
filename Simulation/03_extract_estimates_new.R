@@ -66,7 +66,7 @@ for (i in 1:ntrans) {
 true_param
 
 
-models <- c("TIMM", "TIHMM", "ApproxTIMM", "ApproxTIHMM")
+models <- c("TIMM", "TIHMM", "ApproxTIMM", "ApproxTIHMM","ApproxTIHMMv2")
 
 
 ####################################################################
@@ -103,7 +103,7 @@ model_est_xb_3000 <- load_and_extract_est(
 )
 ## 10000
 model_est_xb_10000 <- load_and_extract_est(
-  results_path = paste0("Simulation/results/results_20250517_081436_xb_10000", "/"),
+  results_path = paste0("Simulation/results/results_20250725_075946_xb_10000", "/"),
   nsim = 10000,
   N = 100,
   st = "xb",

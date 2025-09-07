@@ -5,7 +5,8 @@ create_unique_folder <- function(prefix = "results",study_type,nsim) {
   return(folder_name)
 }
 run_multistate <- function(pop_ms,result_folder,LCA_obj,nsim){
-  
+  gc()
+  pop_ms<- apply_LCA(pop_ms,LCA_obj)
   pop_ms_death_1 <- pop_ms %>%
     dplyr::filter(dht == 1) %>%
     group_by(dataset_id, subject_id) %>%
@@ -50,13 +51,13 @@ run_multistate <- function(pop_ms,result_folder,LCA_obj,nsim){
   gc()
   
 }
-run_multistate_wrapper <- function(dataset,result_folder,LCA_obj,nsim) {
-  # assign LCA class based on LCA model
-  dataset<- apply_LCA(dataset,LCA_obj)
-  gc()
-  run_multistate(dataset,result_folder,LCA_obj,nsim)
-  gc()
-}
+# run_multistate_wrapper <- function(dataset,result_folder,LCA_obj,nsim) {
+#   # assign LCA class based on LCA model
+#   
+#   gc()
+#   run_multistate(dataset,result_folder,LCA_obj,nsim)
+#   gc()
+# }
 
 run_analysis <- function(study_type,nsim,LCA_obj,avoid=NULL){
   #load data
@@ -64,7 +65,7 @@ run_analysis <- function(study_type,nsim,LCA_obj,avoid=NULL){
   
   ########### split by dataset_id #########
   # run in parallel, group pop by dataset_id
-  cores <- min(detectCores() -5, 10) #modify number of cores
+  cores <- min(detectCores() -10, 10) #modify number of cores
   plan(multisession, workers=cores)  # Or `plan(multiprocess)` for cross-platform compatibility
 
   if(!is.null(avoid)){
@@ -78,7 +79,7 @@ run_analysis <- function(study_type,nsim,LCA_obj,avoid=NULL){
   tic("Multistate in parallel")
   options(future.globals.maxSize=1*1e10)
   #lapply(datasets, function(x)run_multistate_wrapper(x,result_folder,LCA_obj,nsim))
-  future_lapply(datasets, FUN = function(x)run_multistate_wrapper(x,result_folder,LCA_obj,nsim))
+  future_lapply(datasets, FUN = function(x)run_multistate(x,result_folder,LCA_obj,nsim))
   toc()
   
   
@@ -109,3 +110,30 @@ run_analysis_benchmark <- function(nsim,LCA_obj,avoid=NULL){
   
   
 }
+
+run_analysis_comparison <- function(study_type,nsim,LCA_obj,avoid=NULL){
+  #load data
+  load(paste0("Data Simulation/schema_",study_type,"_",nsim,"_all.RData"))
+  
+  ########### split by dataset_id #########
+  # run in parallel, group pop by dataset_id
+  cores <- min(detectCores() -5, 10) #modify number of cores
+  plan(multisession, workers=cores)  # Or `plan(multiprocess)` for cross-platform compatibility
+  
+  if(!is.null(avoid)){
+    data_mm %<>% filter(!(dataset_id%in%avoid))
+  }
+  datasets <- split(data_mm, data_mm$dataset_id)
+  # create result folder using timestamp
+  result_folder <-  file.path("results_comparison",create_unique_folder("results",study_type,nsim))
+  dir.create(result_folder, recursive = TRUE)
+  # call function to apply nhm, msm, and flexsurv in parallel
+  tic("Multistate in parallel")
+  options(future.globals.maxSize=1*1e10)
+  #lapply(datasets, function(x)run_multistate_wrapper(x,result_folder,LCA_obj,nsim))
+  future_lapply(datasets, FUN = function(x)run_multistate_wrapper(x,result_folder,LCA_obj,nsim))
+  toc()
+  
+  
+}
+
