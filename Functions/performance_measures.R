@@ -107,3 +107,51 @@ calculate_coverage <- function(estimates, se, true_param, confidence_level = 0.9
 }
 
 
+
+eval_cum_hazard <- function(pm_df, true_param, t_vals, nsim=NULL){
+  N <- length(t_vals)
+  eval_cm <- data.frame()
+  for (i in unique(true_param$trans)){
+    tp <- true_param %>% filter(trans == i)
+    mp <- pm_df %>% filter(trans == i, parameter %in% c("rate", "shape"))
+    
+    true_hazard_vals <- tibble(
+      t = t_vals,
+      hazard = hgompertz(t_vals, tp$shape, exp(tp$rate), log = FALSE),
+      model = "True"
+    )
+    
+    
+    
+    model_ids <- unique(mp$model)
+    
+    
+    for (j in seq_along(model_ids)) {
+      model_data <- mp %>% filter(model == model_ids[j])
+      shape_param <- model_data %>% filter(parameter == "shape") %>% pull(estimate)
+      rate_param <- model_data %>% filter(parameter == "rate") %>% pull(estimate)
+      
+      if (length(shape_param) == 1 && length(rate_param) == 1) {
+        model_hazard_vals <- tibble(
+          t = t_vals,
+          hazard = hgompertz(t_vals, shape_param, exp(rate_param), log = FALSE),
+          model = paste0("Model ", model_ids[j])
+        )
+        # mean squared error
+        mse <- mean((true_hazard_vals$hazard - model_hazard_vals$hazard)^2)
+        # integrated absolute error
+        iae <- sum(abs(true_hazard_vals$hazard - model_hazard_vals$hazard)) * diff(t_vals[1:2])
+        ext_KL <- sum(model_hazard_vals$hazard*(true_hazard_vals$hazard/model_hazard_vals$hazard - log(true_hazard_vals$hazard/model_hazard_vals$hazard)-1) * diff(t_vals[1:2]))
+        
+        eval_cm <-  bind_rows(eval_cm, tibble(
+          transition = i,
+          model = model_ids[j],
+          MSE = mse,
+          IAE = iae,
+          EXT_KL= ext_KL
+        ))
+      }
+    }
+  }
+  return(eval_cm)
+}

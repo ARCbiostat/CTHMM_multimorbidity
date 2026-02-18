@@ -34,42 +34,35 @@ get_internal_validation_matrix <- function(fit,X,covs=NULL){
   Qmatrix
   
 }
-add_death<- function(matrix_misc, n){
-  matrix_nxn <- as.matrix(matrix_misc)
-  matrix_extended <- matrix(0, nrow = n + 1, ncol = n + 1)
-  matrix_extended[1:n, 1:n] <- matrix_nxn
-  matrix_extended[n + 1, n + 1] <- 1
-  return(matrix_extended)
-}
-calculate_m_matrix <- function(pop, index){
+# not needed
+# add_death<- function(matrix_misc, n){
+#   matrix_nxn <- as.matrix(matrix_misc)
+#   matrix_extended <- matrix(0, nrow = n + 1, ncol = n + 1)
+#   matrix_extended[1:n, 1:n] <- matrix_nxn
+#   matrix_extended[n + 1, n + 1] <- 1
+#   return(matrix_extended)
+# }
+calculate_m_matrix <- function(pop, index,sim_obj){
   pop_mp_base <- pop %>% 
     filter(visit_number==index) %>%
     dplyr::select(MP, MP_sim)
   
   misc<- table(class.true=pop_mp_base$MP_sim, class.assigned=pop_mp_base$MP)
   misc <- misc/rowSums(misc)
-  n <- dim(sim_obj$tmat)[1]
-  misc <- add_death(misc, n-1)
   rownames(misc) <- rownames(sim_obj$tmat)
   colnames(misc) <- rownames(sim_obj$tmat)
   return(misc)
 }
 
-calc_approx_m_matrix <- function(pop, index){
+calc_approx_m_matrix <- function(pop, index,sim_obj){
   pop_mp_base <- pop %>%
     group_by(dataset_id, patient_id) %>%
     slice(index) %>%
-    #dplyr::select(MP, MP_base)%>%
     ungroup()
   X <- pop_mp_base %>% dplyr::select(any_of(colnames(sim_obj$pattern_obj$obj$y))) %>% mutate_all(function(x)x+1)
   misc_approx <- NULL
-  if (scenario %in% c("A", "Av2")){
-    misc_approx <- get_internal_validation_matrix(sim_obj$pattern_obj$obj, X)
-  } else if (scenario %in% c("B")){
-    misc_approx <- get_internal_validation_matrix(sim_obj$pattern_obj$obj, X, covs =as.matrix(cbind(pop_mp_base$age), ncol=1) )
-  } else {
-    print("Insert valid scenario")
-  }
+  
+  misc_approx <- get_internal_validation_matrix(sim_obj$pattern_obj$obj, X, covs =as.matrix(cbind(pop_mp_base$age), ncol=1) )
   n <- dim(sim_obj$tmat)[1]
   misc_approx <- add_death(misc_approx, n-1)
   rownames(misc_approx) <- rownames(sim_obj$tmat)

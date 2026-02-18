@@ -19,7 +19,7 @@ apply_nhm <- function(pop_ms,misc, sim_obj, result_folder,nsim){
     covm <- list(
       cov1 = rbind(c(0,1,2), c(0,0,3), c(0,0,0)),
       cov2 = rbind(c(0,4,5), c(0,0,6), c(0,0,0)),
-      cov3 = rbind(c(0,7,8), c(0,0,9), c(0,0,0)),
+      cov3 = rbind(c(0,7,8), c(0,0,9), c(0,0,0))
       )
     tic("nhm gompertz with cov")
     model_obj_gomp<- model.nhm(state ~ age, subject=subject_id, type='gompertz', data=pop_ms, trans= q_nhm,
@@ -47,7 +47,7 @@ apply_nhm <- function(pop_ms,misc, sim_obj, result_folder,nsim){
         model = model_0,
         time = t$toc - t$tic
       )
-      save(model_obj_0, file =paste0(result_folder,"/TIMM_scenario_",scenario,"_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
+      save(model_obj_0, file =paste0(result_folder,"/TIMM_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
     } else {
       cat("Model nhm_base is NULL for dataset_id ",unique(pop_ms$dataset_id),". Model was not saved", "\n")
      }
@@ -102,7 +102,7 @@ apply_nhm <- function(pop_ms,misc, sim_obj, result_folder,nsim){
         model = model_misc,
         time = t$toc - t$tic
       )
-      save(model_obj_m, file =paste0(result_folder,"/TIHMM_scenario_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
+      save(model_obj_m, file =paste0(result_folder,"/TIHMM_", nsim,"_",unique(pop_ms$dataset_id),".RData"))
       
     } else {
       cat("Model nhm_misc is NULL for dataset_id ",unique(pop_ms$dataset_id),". Model was not saved")

@@ -114,8 +114,10 @@ get_estimates <- function(model, model_name, i,j=0){
   trans <-numeric()
   beta_cov1 <- numeric()
   beta_cov2 <-numeric()
+  beta_cov3 <-numeric()
   beta_cov1_se <- numeric()
   beta_cov2_se <- numeric()
+  beta_cov3_se <- numeric()
 
   if(model_name %in% c("benchmark_model"))
   {   
@@ -184,7 +186,7 @@ get_estimates <- function(model, model_name, i,j=0){
     beta_cov1_se <- std_errors[((ntrans*2)+1):(3*ntrans)]
     beta_cov2 <- model$model$estimates[((ntrans*3)+1):(4*ntrans)]
     beta_cov2_se <- std_errors[((ntrans*3)+1):(4*ntrans)]
-    eta_cov3 <- model$model$estimates[((ntrans*4)+1):(5*ntrans)]
+    beta_cov3 <- model$model$estimates[((ntrans*4)+1):(5*ntrans)]
     beta_cov3_se <- std_errors[((ntrans*4)+1):(5*ntrans)]
    
 
@@ -248,4 +250,71 @@ rename_trans<- function(names){
   
   new_names <- gsub("Transition (\\d+) to (\\d+)", "\\1->\\2", names)
   return(new_names)
+}
+
+
+load_and_extract_est <- function(results_path, nsim, N, st, models, load_model=FALSE){
+  if (load_model){
+    pt <-load(paste0("results/results_estimates/model_est_",st,"_",nsim,".RData"))
+    param <- get(pt)
+    param_df <- param$param_df
+    conv_time <- param$time_df
+  }else{
+    param_df <-data.frame(dataset_id = integer(), 
+                          trans=character(),
+                          rate=numeric(),
+                          shape=numeric(),
+                          rate_se=numeric(),
+                          shape_se=numeric(),
+                          beta_cov1 = numeric(),
+                          beta_cov1_se = numeric(),
+                          beta_cov2 = numeric(),
+                          beta_cov2_se = numeric(),
+                          beta_cov3 = numeric(),
+                          beta_cov3_se = numeric()
+    )
+    
+    # extract rate, shape, their se and the transition name and store it in param for each dataset
+    conv_time <- data.frame(dataset_id = integer(), 
+                            model_name = character(),
+                            time = numeric()
+    )
+    
+    for(model_name in models){
+      print(model_name)
+      for(i in 1:N){
+        model_file <- paste0(results_path, model_name, "_", nsim, "_", i, ".RData")
+        model_n <- tryCatch({
+          load(model_file)
+        }, error = function(e) {
+          message(paste("File not found or cannot load:", model_file))
+          return(NULL) 
+        })
+        
+        if (is.null(model_n)) {
+          next
+        }
+
+        model_n <-load(paste0(results_path,model_name,"_",nsim,"_",i,".RData"))
+        model <- get(model_n)
+        if (model_name=="ApproxTIHMM" & is.null(model$model$covmat)){
+          print(paste(i,"skipped"))
+          next
+        }
+        conv_time <- rbind(conv_time, data.frame(dataset_id = i, model_name = model_name, time=model$time))
+        #print(param_df)
+        param_df <- rbind(param_df,get_estimates(model, model_name,i))
+        
+        model_est <-list(
+          param_df = param_df,
+          time_df = conv_time
+        )
+      }
+    }
+  }
+  
+  if (!load_model){
+    save(model_est, file =paste0(result_folder,"/model_est_",st,"_", nsim,".RData"))
+  }
+  return(model_est)
 }

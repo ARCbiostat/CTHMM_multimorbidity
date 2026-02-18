@@ -37,6 +37,10 @@ apply_flexsurv_base <- function(pop_ms, scenario_obj, result_folder,nsim){
   
   q_matrix<-scenario_obj$tmat
   q_matrix[is.na(q_matrix)] <-0
+ 
+  
+  pop_ms %<>% mutate(MP_sim=ifelse(age==age_exit & dht==1, 3,MP_sim)) 
+  
   data <- msm2Surv(data = pop_ms, subject = "subject_id", time= "age", state="MP_sim", Q = q_matrix)
 
   n_trans <-length(unique(data$trans))
