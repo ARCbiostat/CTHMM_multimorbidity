@@ -311,7 +311,7 @@ plot_HR <- function(data) {
     theme(
       legend.title = element_blank(),
       legend.position = "right",
-      axis.text.y = element_text(size = 14)
+      axis.text.y = element_text(size = 16)
     )
 }
 
