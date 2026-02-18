@@ -63,7 +63,7 @@ HR_est_7cov <- HR_est_7cov %>%
   ))
 
 plot_HR(HR_est_7cov)
-ggsave(plot_HR(HR_est_7cov),file="Application/Figures/HR_plot.jpeg",dpi=300)
+ggsave(plot_HR(HR_est_7cov),file="Application/Figures/HR_plot.jpeg",dpi=300,height = 8,width = 8)
 
 
 plot_fm <-plot.nhm.mine2(model_misc3, what= "intensity",trans = 1, covvalue = c(0,1,0,0,0,0,0), colours = c("blue","red"),
