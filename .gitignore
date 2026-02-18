@@ -37,3 +37,4 @@ docs/
 po/*~
 # RStudio Connect folder
 rsconnect/
+Application/Figures

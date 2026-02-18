@@ -292,9 +292,9 @@ plot_HR <- function(data) {
       y_pos = as.numeric(Variable) + (model_offset - mean(unique(model_offset))) * 0.2  # center around original position
     )
   
-  ggplot(data, aes(x = HR, color = model)) +
-    geom_point(aes(y = y_pos), size = 3) +
-    geom_errorbarh(aes(y = y_pos, xmin = L, xmax = U), height = 0.2) +
+  ggplot(data, aes(x = HR)) +
+    geom_point(aes(y = y_pos), size = 4) +
+    geom_errorbarh(aes(y = y_pos, xmin = L, xmax = U), height = 0.2,linewidth=1.2) +
     geom_vline(xintercept = 1, linetype = "dashed", color = "gray") +
     scale_x_continuous(limits = c(0.5, 2)) +
     scale_y_continuous(
@@ -305,13 +305,13 @@ plot_HR <- function(data) {
     labs(
       x = "Hazard Ratio", 
       y = "", 
-      title = "Hazard Ratios in Transition from Mild to Complex MM by Covariate and Model"
+      title = "Transition from Mild to Complex MM"
     ) +
     theme_prism(border = TRUE) +
     theme(
       legend.title = element_blank(),
       legend.position = "right",
-      axis.text.y = element_text(size = 10)
+      axis.text.y = element_text(size = 14)
     )
 }
 
