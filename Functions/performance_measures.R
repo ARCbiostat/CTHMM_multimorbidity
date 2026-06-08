@@ -27,7 +27,8 @@ compute_pm <- function(param_df, true_param) {
     summarise(
       theta= mean(true_value),     
       estimate = mean(estimate_value),
-      se_estimate = sqrt(mean(se_value^2, na.rm = TRUE) + var(estimate_value, na.rm = TRUE)/n()),
+      se_estimate = sd(estimate_value),
+      se_mean=mean(se_value),
       bias = mean(estimate_value - true_value, na.rm = TRUE),
       se_bias = sd(estimate_value - true_value, na.rm = TRUE) / sqrt(n()),
       rel_bias = mean((estimate_value - true_value) / abs(true_value), na.rm = TRUE),
@@ -41,6 +42,9 @@ compute_pm <- function(param_df, true_param) {
 }
 
 compute_pm2 <- function(param_df,true_param){
+  
+  
+  
   
   names(true_param) <- c("trans","t_rate","t_shape","t_beta_cov1","t_beta_cov2","t_beta_cov3")
   results <- param_df %>%
@@ -107,6 +111,24 @@ calculate_coverage <- function(estimates, se, true_param, confidence_level = 0.9
 }
 
 
+type_I_II <- function(estimates, se, true_param, confidence_level = 0.95) {
+  alpha <- 1 - confidence_level
+  z <- qnorm(1 - alpha / 2)  
+  
+  lower_ci <- estimates - z * se
+  upper_ci <- estimates + z * se
+  within_ci <- (0>= lower_ci) & (0<= upper_ci)
+  
+
+  error <- sum(within_ci, na.rm = TRUE)
+  error[min(true_param)==0] <- 100-error
+  
+  return(error)
+}
+
+
+
+
 
 eval_cum_hazard <- function(pm_df, true_param, t_vals, nsim=NULL){
   N <- length(t_vals)
@@ -154,4 +176,42 @@ eval_cum_hazard <- function(pm_df, true_param, t_vals, nsim=NULL){
     }
   }
   return(eval_cm)
+  
+  
+}
+  
+  compute_errors <- function(param_df,true_param){
+    names(true_param) <- c("trans", "rate", "shape", "beta_cov1", "beta_cov2", "beta_cov3")
+    param_long <- param_df %>%
+      pivot_longer(cols = c(rate, shape, beta_cov1, beta_cov2,beta_cov3),
+                   names_to = "parameter", values_to = "estimate_value") %>%
+      pivot_longer(cols = c(rate_se, shape_se, beta_cov1_se, beta_cov2_se,beta_cov3_se),
+                   names_to = "se_param", values_to = "se_value") %>%
+      mutate(se_param = sub("_se$", "", se_param)) %>%
+      filter(parameter == se_param) %>%
+      dplyr::select(-se_param)
+    
+    
+    
+    true_param_long <- true_param %>%
+      pivot_longer(cols = c(rate, shape, beta_cov1, beta_cov2, beta_cov3),
+                   names_to = "parameter", values_to = "true_value")
+    
+    
+    results <-param_long %>%
+      left_join(true_param_long, by = c("trans", "parameter")) %>%
+      group_by(model, trans, parameter) %>%
+      summarise(
+       
+        error = type_I_II(estimate_value, se_value, true_value),
+        
+        
+      
+        
+        
+        .groups = "drop" 
+      )
+    return(results)
+    
+    
 }

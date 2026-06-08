@@ -1,4 +1,4 @@
-run_sim_baseline2 <- function(db,threshold=0.05){
+run_sim_baseline2 <- function(db,threshold=0.05,classes=2:5){
   
   
   require(magrittr)
@@ -46,7 +46,7 @@ run_sim_baseline2 <- function(db,threshold=0.05){
   
   set.seed(1234)
   res <- select_number_LCA(
-    nclasses = 2:5,
+    nclasses = classes,
     X = Xb,
     conditions = disease_names,
     nrep = 15
@@ -84,8 +84,8 @@ run_sim_baseline2 <- function(db,threshold=0.05){
   # NOTE: emp_f does not contain the absorbing state (death), therefore mask needs to be applied only to rows 1 and 2
   q_matrix[1:2, 1:3][mask] <- 0
   q_matrix
-  ntrans <- which(as.numeric(q_matrix)!=0)
+  ntrans <- length(which(as.numeric(q_matrix)!=0))
   gc()
-  if(ntrans!=3)return(c(1,0))
-  else return(c(1,1))
+  if(ntrans==3)return(c(1,1))
+  else return(c(1,0))
 }

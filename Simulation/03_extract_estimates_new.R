@@ -26,7 +26,7 @@ library(tidyverse)
 source("Functions//aux_extract_estimates.R")
 
 # folder where estimates will be saved
-result_folder <-  "results/results_estimates"
+result_folder <-  "results/results_estimates_first_revision"
 
 if (!dir.exists(result_folder)) {
   dir.create(result_folder)
@@ -66,7 +66,7 @@ for (i in 1:ntrans) {
 true_param
 
 
-models <- c("TIMM", "TIHMM", "ApproxTIMM", "ApproxTIHMM","ApproxTIHMMv2")
+models <- c("TIMM", "TIHMM", "ApproxTIMM", "ApproxTIHMM")
 
 
 ####################################################################
@@ -207,3 +207,50 @@ pm_df_est_xc_10000 <-  pm_df_est_xc_10000 %>% filter(model != "benchmark_model")
 pm_df_est_xc_10000 <- rbind(pm_df_est_xc_10000, pm_df_est_bench_10000)
 save(pm_df_est_xc_10000,
      file = paste0(result_folder, "/pm_df_est_xc_10000.RData"))
+
+
+
+
+
+
+
+############################### ERRORS ##################################################
+
+# 3000
+err_df_est_bench_3000 <- compute_errors(model_est_bench_3000$param_df, true_param)
+# 10000
+err_df_est_bench_10000 <- compute_errors(model_est_bench_10000$param_df, true_param)
+####################################################################
+#################### pop-based study 3/6 years #####################
+####################################################################
+
+## 3000
+err_df_est_xb_3000 <- compute_errors(model_est_xb_3000$param_df, true_param)
+err_df_est_xb_3000 <-  err_df_est_xb_3000 %>% filter(model != "benchmark_model")
+err_df_est_xb_3000 <- rbind(err_df_est_xb_3000, err_df_est_bench_3000)
+save(err_df_est_xb_3000,
+     file = paste0(result_folder, "/err_df_est_xb_3000.RData"))
+
+## 10000
+err_df_est_xb_10000 <- compute_errors(model_est_xb_10000$param_df, true_param)
+err_df_est_xb_10000 <-  err_df_est_xb_10000 %>% filter(model != "benchmark_model")
+err_df_est_xb_10000 <- rbind(err_df_est_xb_10000, err_df_est_bench_10000)
+save(err_df_est_xb_10000,
+     file = paste0(result_folder, "/err_df_est_xb_10000.RData"))
+####################################################################
+#################### irregular observations ########################
+####################################################################
+
+## 3000
+err_df_est_xc_3000 <- compute_errors(model_est_xc_3000$param_df, true_param)
+err_df_est_xc_3000 <-  err_df_est_xc_3000 %>% filter(model != "benchmark_model")
+err_df_est_xc_3000 <- rbind(err_df_est_xc_3000, err_df_est_bench_3000)
+save(err_df_est_xc_3000,
+     file = paste0(result_folder, "/err_df_est_xc_3000.RData"))
+
+## 10000
+err_df_est_xc_10000 <- compute_errors(model_est_xc_10000$param_df, true_param)
+err_df_est_xc_10000 <-  err_df_est_xc_10000 %>% filter(model != "benchmark_model")
+err_df_est_xc_10000 <- rbind(err_df_est_xc_10000, err_df_est_bench_10000)
+save(err_df_est_xc_10000,
+     file = paste0(result_folder, "/err_df_est_xc_10000.RData"))
