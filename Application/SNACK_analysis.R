@@ -13,6 +13,7 @@ library(msm)
 library(flexsurv)
 library(nhm)
 library(tictoc)
+library(huxtable)
 #install.packages("psych")  # If not installed
 #install.packages("polycor")
 library(psych)
@@ -126,6 +127,22 @@ snack_3 <- snack_2_filtered %>%
   ungroup()
 
 summary(snack_3$n_visits)
+
+################################
+### Description of the latent patterns
+###############################
+
+dis_prev <- do.call(rbind, lapply(res2$obj$probs,function(x)x[,2]))
+dis_se <- do.call(rbind, lapply(res2$obj$probs.se,function(x)x[,2]))
+dis_table <- as.data.frame(do.call(rbind, lapply(1:39,function(i)paste0(round(dis_prev[i,],4)*100," (",round(logistic(x=logit(p=dis_prev[i,])-1.96*dis_se[i,]/(dis_prev[i,]*(1-dis_prev[i,]))),4)*100,"-",round(logistic(x=logit(p=dis_prev[i,])+1.96*dis_se[i,]/(dis_prev[i,]*(1-dis_prev[i,]))),4)*100,")"))))
+rownames(dis_table) <- gsub("dis","disease",gsub("_"," ",names(res2$obj$probs)))
+colnames(dis_table) <- c("Mild MM","Complex MM")
+dis_table %>% 
+rownames_to_column("Disease") %>% 
+as_hux(add_colnames = F) %>%
+to_latex() %>%
+  write("Tables/Patterns description.txt")
+
 ###################
 ### Covariates ###
 ##################
@@ -171,8 +188,7 @@ covm1 <- list(
   dm_sex = rbind(c(0,2,0), c(0,0,0), c(0,0,0)),
   no_pa = rbind(c(0,3,0), c(0,0,0), c(0,0,0)),
   life_alone = rbind(c(0,4,0), c(0,0,0), c(0,0,0)),
-<<<<<<< HEAD
-=======
+
   heavy_alcool = rbind(c(0,5,0), c(0,0,0), c(0,0,0)),
   if_ever_smoke = rbind(c(0,6,0), c(0,0,0), c(0,0,0)),
   fin_strain_early = rbind(c(0,7,0), c(0,0,0), c(0,0,0)),
