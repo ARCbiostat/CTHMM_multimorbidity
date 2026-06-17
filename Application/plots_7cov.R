@@ -57,7 +57,7 @@ HR_est_7cov <- HR_est_7cov %>%
                            "dm_sex"               = "Sex (F/M)",
                            "no_pa"                = "Physical activity (N/Y)",
                            "life_alone"           = "Living alone (Y/N)",
-                           "educ_el"              = "Education (L/H)",
+                           "educ_el"              = "Elementary\neducation (N/Y)",
                            "heavy_alcool"         = "Alcohol (Y/N)",
                            "sei_long_cat_dummy"   = "Manual occupation (Y/N)" 
   ))
