@@ -139,7 +139,7 @@ rownames(dis_table) <- gsub("dis","disease",gsub("_"," ",names(res2$obj$probs)))
 colnames(dis_table) <- c("Mild MM","Complex MM")
 dis_table %>% 
 rownames_to_column("Disease") %>% 
-as_hux(add_colnames = F) %>%
+as_hux(add_colnames = T) %>%
 to_latex() %>%
   write("Tables/Patterns description.txt")
 
