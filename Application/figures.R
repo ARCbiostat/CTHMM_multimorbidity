@@ -1,8 +1,11 @@
 library(mvtnorm)
+library(tidyverse)
 library(MMLCA)
 library(ggplot2)
 library(ggprism)
+source("Functions//helper_f_snack.R")
 
+load("CTHMM_multimorbidity/Application/results/TIHMM_7cov.RData")
 
 ### alluvial plot
 
@@ -20,6 +23,35 @@ all_snack <- ggalluvial(
 )
 
 all_snack$plot+scale_x_continuous("Age",breaks = seq(20,35,by=2),labels = c("60-63","66-69", "72-75", "78-81", "84-87", "90-93", "96-99", "100+"))
+
+###### HR plots ########
+library(ggplot2)
+library(ggprism)
+
+#helper functions in helper_f_snack.R
+HR_est_cov <- data.frame()
+HR_est_cov <- rbind(HR_est_cov,
+                    extract_hr_estimates(model_misc3, "TIMM", "nhm")
+)
+
+HR_est_cov <- HR_est_cov %>%
+  mutate(Variable = recode(Variable,
+                           "if_ever_smoke"        = "Smoking (Y/N)",
+                           "dm_sex"               = "Sex (F/M)",
+                           "no_pa"                = "Sedentarism (N/Y)",
+                           "life_alone"           = "Living alone (Y/N)",
+                           "educ_el"              = "Elementary Education (Y/N)",
+                           "heavy_alcool"         = "Alcohol (Y/N)",
+                           "sei_long_cat_dummy"   = "Manual occupation (Y/N)"
+  ))
+
+
+plot_HR(HR_est_7cov)
+
+ggsave(plot_HR(HR_est_7cov),file="Application/Figures/HR_plot2.jpeg",dpi=300,width = 8,height = 8)
+
+
+
 
 
 
@@ -68,47 +100,6 @@ Fig_appl_4b=ggplot(trans_death_data)+
   theme(legend.position = "bottom")
 
 Fig_appl_4b
-
-############ HR ratio
-# helper functions in helper_f_snack.R
-HR_est_7cov <- data.frame()
-HR_est_7cov <- rbind(HR_est_7cov, 
-                     extract_hr_estimates(model_misc3, "TIHMM", "nhm"))
-
-
-HR_est_7cov["dm_sex",2] <- 1/HR_est_7cov["dm_sex",2]
-HR_est_7cov["dm_sex", c(3, 4)] <- 1 / rev(HR_est_7cov["dm_sex", c(3, 4)])
-
-HR_est_7cov <- HR_est_7cov %>%
-  mutate(Variable = recode(Variable,
-                           "if_ever_smoke"        = "Smoking (Y/N)",
-                           "dm_sex"               = "Sex (M/F)",
-                           "no_pa"                = "Sedentarism (Y/N)",
-                           "life_alone"           = "Living alone (Y/N)",
-                           "educ_el"              = "Elementary Education (Y/N)",
-                           "heavy_alcool"         = "Alcohol (Y/N)",
-                           "sei_long_cat_dummy"   = "Manual occupation (Y/N)" 
-  ))
-
-
-
-HR_est_7cov$Variable <- factor(HR_est_7cov$Variable, levels = rev(unique(HR_est_7cov$Variable)))
-
-Fig_appl_4a <- ggplot(HR_est_7cov, aes(x = HR, y = Variable)) +
-  geom_point(size = 4) +
-  geom_errorbarh(aes(xmin = L, xmax = U), height = 0.2, size=1.2) +
-  geom_vline(xintercept = 1, linetype = "dashed", color = "gray") +
-  scale_x_continuous(limits = c(0.5, 2)) +
-  labs(
-    x = "Hazard Ratio", 
-    y = "", 
-    title = "Transition from Mild to Complex MM"
-  ) +
-  theme_prism() +
-  theme(
-    axis.text.y = element_text(size = 10)
-  )
-Fig_appl_4a
 
 ########## Transition mild to complex MM by covariates
 
@@ -204,26 +195,6 @@ ggpubr::ggarrange(Fig_appl_res2a,Fig_appl_res2b)
 
 
 
-
-
-# pred_mean <- predict.nhm.mine(model_misc3, 
-#                                     times=t_vals, 
-#                                     flag="Transition Probability", time0=60)
-# 
-# 
-# data_pred_mean=fix_pred_complex(model_misc3,pred_mean,lab = "Mean")
-# 
-# 
-# Fig_appl_res2=ggplot(data_pred_mean)+
-#   geom_line(aes(age,prob),linewidth=1)+
-#   geom_ribbon(aes(age,ymin=lower,ymax=upper),alpha=0.3)+
-#   scale_x_continuous("Age (years)")+
-#   scale_y_continuous("Probability",limits = c(0,0.7))+
-#   ggtitle("From Mild to Complex MM")+
-#   theme_prism()+
-#   theme(legend.position = "bottom")
-# 
-# Fig_appl_res2
 
 
 

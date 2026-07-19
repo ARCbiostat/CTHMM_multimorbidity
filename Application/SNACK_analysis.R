@@ -370,7 +370,6 @@ covm1 <- list(
   dm_sex = rbind(c(0,2,0), c(0,0,0), c(0,0,0)),
   no_pa = rbind(c(0,3,0), c(0,0,0), c(0,0,0)),
   life_alone = rbind(c(0,4,0), c(0,0,0), c(0,0,0)),
->>>>>>> 1c3fae5e772ce20e87c272e8439b62379c9f8e97
   if_ever_smoke = rbind(c(0,5,0), c(0,0,0), c(0,0,0)),
   heavy_alcool = rbind(c(0,6,0), c(0,0,0), c(0,0,0)),
   sei_long_cat_dummy = rbind(c(0,7,0), c(0,0,0), c(0,0,0))
@@ -694,53 +693,9 @@ n <- dim(snack_nhm)[1]
 -2*logLik(model_6_misc) + log(n)*length(model_6_misc$estimates[model_6_misc$estimates!=0])
 +2*model_3$value + log(n)*model_3$npar
 +2*model_misc$value + log(n)*model_misc$npar
->>>>>>> 1c3fae5e772ce20e87c272e8439b62379c9f8e97
+
 
 save.image("fits_snack.RData")
-
-######### Plots ###########
-
-t_vals <- seq(60, 90, length.out = 100)
-
-# female (blu) vs male (red)
-plot_fm <-plot.nhm.mine2(model_misc, what= "intensity",trans = 1, covvalue = c(0,1,0,0,0,0), colours = c("blue","red"), colours_fill = c("lightblue","pink"),
-               labels = c("Female","Male"), time0=60, times= t_vals, main_arg= "Transition Mild to Complex MM", xlab="Age")
-plot_fm
-# no physical activity (orange) vs physical activity (green)
-plot.nhm.mine(model_misc, what= "intensity",trans = 1, covvalue = c(0,0,1,0,0,0), colours = c("darkorange","forestgreen"), colours_fill = c("moccasin","#ccffcc"),
-               labels = c("No physical activity","Physical activity"), time0=60, times= t_vals, main_arg= "Hazard function", xlab="Age")
-
-plot.nhm.mine(model_misc, time0=60, xlab="Age")
-plot.nhm.mine(model_misc, what= "intensities",time0=60, times= t_vals, main_arg= "Hazard function", xlab="Age")
-plot.nhm.mine(model_misc, what= "probabilities",time0=60, times= t_vals, main_arg= "Hazard function", xlab="Age")
-
-
-###### HR plots ########
-library(ggplot2)
-library(ggprism)
-
-#helper functions in helper_f_snack.R
-HR_est_cov <- data.frame()
-HR_est_cov <- rbind(HR_est_cov,
-                     extract_hr_estimates(model_misc3, "TIMM", "nhm")
-                     )
-
-HR_est_cov <- HR_est_cov %>%
-  mutate(Variable = recode(Variable,
-                           "if_ever_smoke"        = "Smoking (Y/N)",
-                           "dm_sex"               = "Sex (F/M)",
-                           "no_pa"                = "Sedentarism (N/Y)",
-                           "life_alone"           = "Living alone (Y/N)",
-                           "educ_el"              = "Elementary Education (Y/N)",
-                           "heavy_alcool"         = "Alcohol (Y/N)",
-                           "sei_long_cat_dummy"   = "Manual occupation (Y/N)"
-  ))
-
-
-plot_HR(HR_est_cov)
-
-ggsave(plot_HR(HR_est_cov),file="Application/Figures/HR_plot.jpeg",dpi=300)
-
 
 
 
