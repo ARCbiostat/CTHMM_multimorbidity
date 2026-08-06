@@ -11,9 +11,13 @@ Understanding how multimorbidity evolves over time is essential for improving cl
 In this work, we propose a **Hidden Multistate Model (HMM)** framework to characterize transitions between latent multimorbidity states over time. The approach enables researchers to:
 
 ✅Capture transitions between data-driven multimorbidity patterns
+
 ✅ Account for interval censoring and latent nature of the states
+
 ✅ Handle irregular observation schedules and right-censoring
+
 ✅ Identify risk factors associated with accelerated progression toward more complex multimorbidity states
+
 ✅ Quantify how mortality risk changes across different multimorbidity patterns
 
 The methodology is illustrated using a simulation study and longitudinal population-based data and provides a flexible framework for investigating heterogeneous aging trajectories.
